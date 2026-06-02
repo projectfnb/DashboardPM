@@ -81,7 +81,7 @@ html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:
   min-height:40px;
 }
 .hdr-row2{
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
   padding-top:5px;padding-bottom:2px;border-top:1px solid var(--border);
   min-height:34px;
 }
@@ -93,7 +93,7 @@ html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:
 .hdiv{width:1px;height:22px;background:var(--border);flex-shrink:0;}
 
 /* pills brand */
-.hpills{display:flex;gap:4px;flex-wrap:wrap;}
+.hpills{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0;}
 .pill{padding:3px 9px;border-radius:18px;font-size:9.5px;font-weight:600;border:1.5px solid var(--border);
   background:transparent;color:var(--t2);cursor:pointer;transition:all .15s;
   font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;}
@@ -113,13 +113,13 @@ html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:
 /* filter dropdowns */
 .fsel{padding:3px 8px;border-radius:7px;font-size:9.5px;font-weight:600;border:1.5px solid var(--border);
   background:var(--bg3);color:var(--t2);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;
-  outline:none;transition:all .15s;max-width:160px;}
+  outline:none;transition:all .15s;max-width:140px;min-width:0;}
 .fsel:hover,.fsel:focus{border-color:var(--orange);color:var(--t1);}
 .fsel option{background:var(--bg2);}
 .fsel-label{font-size:8.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;}
-.fgrp{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.fgrp{display:flex;align-items:center;gap:4px;flex-shrink:0;flex-wrap:nowrap;}
 
-.hright{display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:auto;}
+.hright{display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:auto;flex-wrap:wrap;}
 .live{display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--t2);
   font-family:'JetBrains Mono',monospace;white-space:nowrap;}
 .ldot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
@@ -136,19 +136,19 @@ html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:
 
 /* LEFT SIDEBAR */
 .sl{width:190px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);
-  padding:12px 8px;display:flex;flex-direction:column;gap:10px;align-self:flex-start;
-  position:sticky;top:82px;max-height:calc(100vh - 82px);overflow-y:auto;}
+  padding:8px 8px;display:flex;flex-direction:column;gap:5px;
+  position:sticky;top:82px;height:calc(100vh - 82px);overflow-y:auto;}
 .stitle{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--t3);padding:0 2px;margin-bottom:2px;}
-.ac{border-radius:var(--rs);padding:9px 10px;border:1px solid var(--border);position:relative;overflow:hidden;}
+  color:var(--t3);padding:0 2px;margin-bottom:1px;}
+.ac{border-radius:var(--rs);padding:6px 10px;border:1px solid var(--border);position:relative;overflow:hidden;}
 .ac::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
 .ac.cr::before{background:var(--red);}
 .ac.mn::before{background:var(--yellow);}
 .ac.in::before{background:var(--blue);}
 .ac.ok::before{background:var(--green);}
-.ac-n{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;}
+.ac-n{font-size:18px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;}
 .ac-l{font-size:9px;color:var(--t2);margin-top:2px;}
-.ac-s{font-size:8px;color:var(--t3);margin-top:3px;font-family:'JetBrains Mono',monospace;
+.ac-s{font-size:8px;color:var(--t3);margin-top:2px;font-family:'JetBrains Mono',monospace;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* SM sebagai dropdown di sidebar */
@@ -284,8 +284,12 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
 .ipg-proj{font-size:10.5px;font-weight:700;color:var(--t1);}
 .ipg-cnt{font-size:8.5px;font-family:'JetBrains Mono',monospace;font-weight:600;background:var(--red-d);color:var(--red);padding:2px 6px;border-radius:4px;}
 .ipg-sm{font-size:8.5px;color:var(--t3);margin-bottom:4px;}
-.ipg-item{display:flex;align-items:flex-start;gap:6px;padding:2px 0;font-size:10px;color:var(--t2);}
+.ipg-item{display:flex;align-items:flex-start;gap:6px;padding:4px 0;font-size:10px;color:var(--t2);border-bottom:1px solid rgba(255,255,255,.04);}
+.ipg-item:last-child{border-bottom:none;}
 .ipg-dot{width:4px;height:4px;border-radius:50%;background:var(--orange);margin-top:5px;flex-shrink:0;}
+.ipg-kat{font-size:8px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;flex-shrink:0;margin-top:1px;letter-spacing:.03em;}
+.ipg-txt{font-size:10px;color:var(--t2);line-height:1.5;flex:1;}
+.ipg-issues{display:flex;flex-direction:column;gap:0;}
 
 /* PDF BUTTON */
 .pdfbtn{background:linear-gradient(135deg,var(--blue),#1d4ed8);border:none;border-radius:var(--rs);
@@ -456,7 +460,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
   table{min-width:800px;table-layout:auto;}
 
   /* Header filter wrap */
-  .hdr-row1,.hdr-row2{flex-wrap:wrap;gap:6px;}
+  .hdr-row1,.hdr-row2{flex-wrap:wrap;gap:5px;}
   .hdiv{display:none;}
 
   /* Expand meta grid */
@@ -967,7 +971,13 @@ function normalizeRow(d){
     plumbing:     parseF(steps.plumbing  ?? d['Progres Plumbing']  ?? d['Plumbing & Gas (%)']     ?? d.plumbing),
     hvac:         parseF(steps.hvac      ?? d['Progres HVAC']      ?? d['HVAC (%)']               ?? d.hvac),
     fixture:      parseF(steps.fixture   ?? d['Progres Fixture']   ?? d['Furniture & Fixture (%)']?? d.fixture),
-    issues:       d.issues || (d['Issue & Kendala'] ? [d['Issue & Kendala']] : []),
+    issues:       d.issues || (function(){
+                    var raw = d['Issue & Kendala'] || d.kendala || '';
+                    if(!raw) return [];
+                    // Split by [Kategori] pattern → tiap issue jadi item terpisah
+                    var parts = raw.split(/(?=\[)/);
+                    return parts.map(function(s){ return s.trim(); }).filter(Boolean);
+                  }()),
     project:      d['Nama Project'] || d.namaProject || d.project || d.lokasi || '—',
     week:         parseF(d['Minggu Ke'] ?? d.mingguKe ?? d.week) || 0,
     progress:     aktual,
@@ -1330,11 +1340,19 @@ function rIssues(){
   if(!projWithIssues.length){c.innerHTML='<div class="empty">🎉 Tidak ada open issues</div>';return;}
   c.innerHTML=projWithIssues.map(proj=>{
     const d=grouped[proj];
-    return `<div class="ipg">
-      <div class="ipg-hd"><span class="ipg-proj">📍 ${proj}</span><span class="ipg-cnt">${d.issues.length} issue</span></div>
-      <div class="ipg-sm">SM: ${d.sm} · ${sbg(d.status)}</div>
-      <div>${d.issues.map(iss=>`<div class="ipg-item"><div class="ipg-dot"></div>${iss}</div>`).join('')}</div>
-    </div>`;
+    const issueHTML=d.issues.map(iss=>{
+      const m=iss.match(/^\[([^\]]+)\]\s*(.*)/s);
+      if(m){
+        const kat=m[1], txt=m[2]||'';
+        const clrMap={'Sipil':'#3b82f6','MEP':'#8b5cf6','ME':'#8b5cf6','Internal':'#6b7280',
+                   'Vendor':'#f59e0b','Approval':'#ef4444','Mall/Landlord':'#ec4899',
+                   'Material':'#14b8a6','Plumbing':'#0ea5e9','HVAC':'#10b981'};
+        const clr=clrMap[kat]||'#94a3b8';
+        return '<div class="ipg-item"><span class="ipg-kat" style="background:'+clr+'20;color:'+clr+';border:1px solid '+clr+'40">'+kat+'</span><span class="ipg-txt">'+txt+'</span></div>';
+      }
+      return '<div class="ipg-item"><div class="ipg-dot"></div><span class="ipg-txt">'+iss+'</span></div>';
+    }).join('');
+    return '<div class="ipg"><div class="ipg-hd"><span class="ipg-proj">📍 '+proj+'</span><span class="ipg-cnt">'+d.issues.length+' issue</span></div><div class="ipg-sm">SM: '+d.sm+' · '+sbg(d.status)+'</div><div class="ipg-issues">'+issueHTML+'</div></div>';
   }).join('');
 }
 
@@ -1493,7 +1511,7 @@ function rSummary(){
   ${cr>0?`<div class="sum-block">
     <div class="sum-block-title">🔴 Critical Delay — Perlu Eskalasi</div>
     <div class="sum-list">${crProjs.map(d=>`
-      <div class="sum-li"><span><b>${d.namaProject}</b> — Aktual ${d.aktual}% vs target ${d.target}% (dev ${d.aktual-d.target}%). PM: ${d.namaPM} · SM: ${d.sm} · ${d.kontraktor}.${(d.issues||[]).length?` Issues: ${d.issues.join('; ')}.`:''}</span></div>
+      <div class="sum-li"><span><b>${d.namaProject}</b> — Aktual ${d.aktual}% vs target ${d.target}% (dev ${(d.aktual-d.target).toFixed(1)}%). PM: ${d.namaPM} · SM: ${d.sm} · ${d.kontraktor}.${(d.issues||[]).length?` Issues: ${d.issues.join('; ')}.`:''}</span></div>
     `).join('')}</div>
   </div>`:''}
   ${mn>0?`<div class="sum-block" style="border-left-color:var(--yellow)">
