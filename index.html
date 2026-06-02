@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<!-- build:20260601222825 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PM Dashboard — FnB 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0c1623;--bg2:#111f32;--bg3:#172540;
+  --card:#17253b;--card2:#1c2e47;
+  --orange:#f57c28;--orange-l:#ff9e52;--orange-d:rgba(245,124,40,0.12);
+  --green:#22c55e;--green-d:rgba(34,197,94,0.12);
+  --yellow:#f59e0b;--yellow-d:rgba(245,158,11,0.12);
+  --red:#ef4444;--red-d:rgba(239,68,68,0.12);
+  --teal:#14b8a6;--teal-d:rgba(20,184,166,0.12);
+  --blue:#3b82f6;--blue-d:rgba(59,130,246,0.12);
+  --t1:#e8f0fe;--t2:#7b92b2;--t3:#3d5470;
+  --border:rgba(255,255,255,0.06);--bho:rgba(245,124,40,0.35);
+  --r:12px;--rs:8px;
+}
+[data-theme="light"] {
+  --bg:#f0f4f8;--bg2:#e2e8f0;--bg3:#d1dbe8;
+  --card:#ffffff;--card2:#f8fafc;
+  --orange:#e8650a;--orange-l:#f57c28;--orange-d:rgba(232,101,10,0.10);
+  --green:#16a34a;--green-d:rgba(22,163,74,0.10);
+  --yellow:#d97706;--yellow-d:rgba(217,119,6,0.10);
+  --red:#dc2626;--red-d:rgba(220,38,38,0.10);
+  --teal:#0d9488;--teal-d:rgba(13,148,136,0.10);
+  --blue:#2563eb;--blue-d:rgba(37,99,235,0.10);
+  --t1:#1e293b;--t2:#475569;--t3:#94a3b8;
+  --border:rgba(0,0,0,0.08);--bho:rgba(232,101,10,0.30);
+}
+[data-theme="light"] body { color:var(--t1); }
+[data-theme="light"] .hdr { background:var(--card); border-bottom:1px solid var(--border); }
+[data-theme="light"] .pill { background:var(--bg2); color:var(--t2); }
+[data-theme="light"] .pill.active { background:var(--orange); color:#fff; }
+[data-theme="light"] .fsel { background:var(--bg2); color:var(--t1); border-color:var(--border); }
+[data-theme="light"] .kpi { background:var(--card); border-color:var(--border); }
+[data-theme="light"] .sl { background:var(--card); border-right:1px solid var(--border); }
+[data-theme="light"] .sr { background:var(--card); border-left:1px solid var(--border); }
+[data-theme="light"] .mc { background:var(--bg); }
+[data-theme="light"] .tbl-wrap table thead tr { background:var(--bg2); }
+[data-theme="light"] .tbl-wrap table tbody tr:hover { background:var(--bg2); }
+[data-theme="light"] .tbl-wrap table tbody tr { border-bottom:1px solid var(--border); }
+[data-theme="light"] .expand-inner { background:var(--bg2); border:1px solid var(--border); }
+[data-theme="light"] .dis-bar-bg { background:var(--bg3); }
+[data-theme="light"] .exp-meta-box { background:var(--card); border:1px solid var(--border); }
+[data-theme="light"] .pcard { background:var(--bg2); border:1px solid var(--border); }
+[data-theme="light"] .pcard:hover { border-color:var(--orange); }
+[data-theme="light"] .wkbtn { background:var(--bg2); color:var(--t2); }
+[data-theme="light"] .wkbtn.active { background:var(--orange); color:#fff; }
+[data-theme="light"] .modal-box { background:var(--card); border:1px solid var(--border); }
+[data-theme="light"] .stitle { color:var(--t2); }
+[data-theme="light"] .ipg { background:var(--bg2); border:1px solid var(--border); }
+[data-theme="light"] .sum-block { background:var(--card); border:1px solid var(--border); }
+[data-theme="light"] .btn-g { background:var(--green); }
+[data-theme="light"] select option { background:var(--card); color:var(--t1); }
+*{margin:0;padding:0;box-sizing:border-box;}
+
+/* ── SCROLLABLE BODY ── */
+html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--t1);
+  height:auto;min-height:100vh;overflow-y:scroll;overflow-x:hidden;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--t3);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--orange);}
+
+/* ── HEADER — 2 baris ── */
+.hdr{
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,0.4);
+  padding:6px 12px;
+}
+.hdr-row1{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  min-height:40px;
+}
+.hdr-row2{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding-top:5px;padding-bottom:2px;border-top:1px solid var(--border);
+  min-height:34px;
+}
+.logo{width:28px;height:28px;background:var(--orange);border-radius:7px;display:flex;
+  align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff;flex-shrink:0;}
+.htitle{flex-shrink:0;}
+.htitle h1{font-size:11px;font-weight:700;line-height:1.2;white-space:nowrap;}
+.htitle span{font-size:8px;color:var(--t2);font-family:'JetBrains Mono',monospace;}
+.hdiv{width:1px;height:22px;background:var(--border);flex-shrink:0;}
+
+/* pills brand */
+.hpills{display:flex;gap:4px;flex-wrap:wrap;}
+.pill{padding:3px 9px;border-radius:18px;font-size:9.5px;font-weight:600;border:1.5px solid var(--border);
+  background:transparent;color:var(--t2);cursor:pointer;transition:all .15s;
+  font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;}
+.pill:hover{border-color:var(--orange);color:var(--orange);}
+.pill.active{border-color:var(--orange);background:var(--orange);color:#fff;}
+.pill.all.active{background:var(--blue);border-color:var(--blue);}
+
+/* week group + dropdown tambahan */
+.wk-group{display:flex;align-items:center;gap:4px;flex-shrink:0;flex-wrap:wrap;}
+.wk-lbl{font-size:8.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.wkbtn{min-width:26px;height:24px;padding:0 5px;border-radius:6px;border:1.5px solid var(--border);
+  background:transparent;color:var(--t2);font-size:9.5px;font-weight:700;cursor:pointer;
+  transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif;}
+.wkbtn:hover{border-color:var(--teal);color:var(--teal);}
+.wkbtn.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+
+/* filter dropdowns */
+.fsel{padding:3px 8px;border-radius:7px;font-size:9.5px;font-weight:600;border:1.5px solid var(--border);
+  background:var(--bg3);color:var(--t2);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;
+  outline:none;transition:all .15s;max-width:160px;}
+.fsel:hover,.fsel:focus{border-color:var(--orange);color:var(--t1);}
+.fsel option{background:var(--bg2);}
+.fsel-label{font-size:8.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;}
+.fgrp{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+
+.hright{display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:auto;}
+.live{display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--t2);
+  font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.ldot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+.btn{padding:4px 10px;border-radius:var(--rs);font-size:9.5px;font-weight:600;cursor:pointer;
+  transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+.btn-o{background:var(--orange);color:#fff;border:none;}
+.btn-o:hover{background:var(--orange-l);}
+.btn-g{background:transparent;border:1.5px solid var(--border);color:var(--t2);}
+.btn-g:hover{border-color:var(--orange);color:var(--orange);}
+
+/* ── LAYOUT: single column, no horizontal scroll ── */
+.layout{display:flex;width:100%;max-width:100%;gap:0;}
+
+/* LEFT SIDEBAR */
+.sl{width:190px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);
+  padding:12px 8px;display:flex;flex-direction:column;gap:10px;align-self:flex-start;
+  position:sticky;top:82px;max-height:calc(100vh - 82px);overflow-y:auto;}
+.stitle{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--t3);padding:0 2px;margin-bottom:2px;}
+.ac{border-radius:var(--rs);padding:9px 10px;border:1px solid var(--border);position:relative;overflow:hidden;}
+.ac::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.ac.cr::before{background:var(--red);}
+.ac.mn::before{background:var(--yellow);}
+.ac.in::before{background:var(--blue);}
+.ac.ok::before{background:var(--green);}
+.ac-n{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;}
+.ac-l{font-size:9px;color:var(--t2);margin-top:2px;}
+.ac-s{font-size:8px;color:var(--t3);margin-top:3px;font-family:'JetBrains Mono',monospace;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* SM sebagai dropdown di sidebar */
+.sm-dropdown-wrap{display:flex;flex-direction:column;gap:5px;}
+.fsel-full{width:100%;padding:5px 8px;border-radius:7px;font-size:10px;font-weight:600;
+  border:1.5px solid var(--border);background:var(--bg3);color:var(--t2);cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:all .15s;}
+.fsel-full:hover,.fsel-full:focus{border-color:var(--orange);color:var(--t1);}
+.fsel-full option{background:var(--bg2);}
+
+/* CENTER — full width */
+.mc{flex:1;min-width:0;padding:14px 12px;display:flex;flex-direction:column;gap:12px;overflow:visible;}
+
+.abn{background:linear-gradient(90deg,var(--red-d),transparent);border:1px solid rgba(239,68,68,.2);
+  border-radius:var(--rs);padding:7px 12px;font-size:10.5px;color:var(--red);
+  display:flex;align-items:center;gap:7px;animation:si .3s ease;}
+@keyframes si{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+
+.krow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:11px 12px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s;}
+.kpi:hover{transform:translateY(-2px);border-color:var(--bho);}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:var(--r) var(--r) 0 0;}
+.kpi.kt::after{background:var(--blue);}
+.kpi.ko::after{background:var(--green);}
+.kpi.km::after{background:var(--yellow);}
+.kpi.kc::after{background:var(--red);}
+.ktop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;}
+.kico{font-size:18px;}
+.ktrend{font-size:8.5px;font-weight:600;padding:2px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;}
+.tu{background:var(--green-d);color:var(--green);}
+.td{background:var(--red-d);color:var(--red);}
+.tn{background:var(--blue-d);color:var(--blue);}
+.kval{font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;}
+.kpi.kt .kval{color:var(--blue);}
+.kpi.ko .kval{color:var(--green);}
+.kpi.km .kval{color:var(--yellow);}
+.kpi.kc .kval{color:var(--red);}
+.klbl{font-size:10px;color:var(--t2);margin-top:3px;font-weight:500;}
+.ksub{font-size:8.5px;color:var(--t3);margin-top:2px;font-family:'JetBrains Mono',monospace;}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.chd{padding:10px 13px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.cht{font-size:11.5px;font-weight:700;}
+.cbadge{font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:600;padding:2px 7px;
+  border-radius:4px;background:var(--orange-d);color:var(--orange);}
+
+/* TABLE — no horizontal scroll */
+.tbl-wrap{overflow-x:visible;width:100%;}
+table{width:100%;border-collapse:collapse;table-layout:fixed;}
+thead th{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);
+  padding:7px 8px;text-align:left;background:rgba(255,255,255,.02);border-bottom:1px solid var(--border);
+  white-space:nowrap;overflow:hidden;}
+tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .12s;}
+tbody tr.trow{cursor:pointer;-webkit-tap-highlight-color:rgba(245,124,40,.2);}
+tbody tr.trow:active{background:rgba(245,124,40,.08);}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:rgba(255,255,255,.025);}
+tbody tr.expanded{background:rgba(245,124,40,.04);}
+tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;}
+
+.pn{font-weight:700;font-size:10.5px;display:block;margin-bottom:2px;line-height:1.3;
+  white-space:normal;word-break:break-word;}
+.btag{display:inline-block;font-size:7px;font-weight:700;letter-spacing:.04em;
+  padding:1px 4px;border-radius:3px;margin-left:3px;vertical-align:middle;}
+.bt-c{background:rgba(255,105,97,.15);color:#ff6961;}
+.bt-g{background:rgba(59,130,246,.15);color:#60a5fa;}
+.bt-gg{background:rgba(250,204,21,.15);color:#fbbf24;}
+.bt-s{background:rgba(168,85,247,.15);color:#c084fc;}
+.bt-m{background:rgba(20,184,166,.15);color:#2dd4bf;}
+.prsm{font-size:9px;color:var(--t2);}
+.prktr{font-size:8px;color:var(--t3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wkcell{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t2);text-align:center;}
+.prwrap{display:flex;align-items:center;gap:4px;}
+.prbg{flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;min-width:40px;}
+.prfill{height:100%;border-radius:3px;transition:width .6s ease;}
+.prpct{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;min-width:26px;text-align:right;}
+.tgt{font-size:7.5px;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+.dc{text-align:center;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;}
+.dp{color:var(--green);}
+.dn{color:var(--red);}
+.dz{color:var(--t3);}
+.sb{display:inline-flex;align-items:center;gap:3px;font-size:8px;font-weight:700;
+  padding:2px 6px;border-radius:4px;white-space:nowrap;}
+.s-on{background:var(--green-d);color:var(--green);}
+.s-mn{background:var(--yellow-d);color:var(--yellow);}
+.s-cr{background:var(--red-d);color:var(--red);}
+.s-ea{background:var(--teal-d);color:var(--teal);}
+
+/* SISA HARI */
+.sisa-ok{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;color:var(--green);}
+.sisa-warn{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;color:var(--yellow);}
+.sisa-over{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;color:var(--red);}
+.sisa-lbl{font-size:7.5px;color:var(--t3);margin-top:1px;}
+
+/* EXPANDABLE ROW */
+.expand-row td{padding:0;}
+.expand-inner{padding:11px 13px;background:rgba(12,22,35,0.7);border-top:1px solid rgba(245,124,40,.15);animation:exi .2s ease;}
+@keyframes exi{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+.dis-title{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--orange);margin-bottom:8px;}
+.dis-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.dis-item{background:var(--bg3);border-radius:6px;padding:7px 9px;}
+.dis-name{font-size:8px;color:var(--t2);margin-bottom:4px;font-weight:600;}
+.dis-bar-bg{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-bottom:3px;}
+.dis-bar-fill{height:100%;border-radius:3px;transition:width .7s ease;}
+.dis-pct{font-size:8.5px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.dis-bar-fill.g{background:var(--green);}
+.dis-bar-fill.y{background:var(--yellow);}
+.dis-bar-fill.r{background:var(--red);}
+
+/* ROW 2 */
+.row2{display:grid;grid-template-columns:1.2fr 0.8fr;gap:10px;}
+
+/* ISSUES */
+.iitem{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:flex-start;gap:8px;transition:background .12s;}
+.iitem:hover{background:rgba(255,255,255,.02);}
+.iitem:last-child{border-bottom:none;}
+.idot{width:6px;height:6px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.ibody{flex:1;}
+.itxt{font-size:10px;font-weight:600;margin-bottom:3px;line-height:1.4;}
+.imeta{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.icat{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:2px 5px;border-radius:3px;}
+.ic-a{background:var(--red-d);color:var(--red);}
+.ic-m{background:var(--yellow-d);color:var(--yellow);}
+.ic-ml{background:var(--orange-d);color:var(--orange);}
+.ic-o{background:var(--blue-d);color:var(--blue);}
+.iproj{font-size:8.5px;color:var(--t2);}
+.ism{font-size:8px;color:var(--t3);margin-top:2px;}
+.ipg{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.05);}
+.ipg:last-child{border-bottom:none;}
+.ipg-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.ipg-proj{font-size:10.5px;font-weight:700;color:var(--t1);}
+.ipg-cnt{font-size:8.5px;font-family:'JetBrains Mono',monospace;font-weight:600;background:var(--red-d);color:var(--red);padding:2px 6px;border-radius:4px;}
+.ipg-sm{font-size:8.5px;color:var(--t3);margin-bottom:4px;}
+.ipg-item{display:flex;align-items:flex-start;gap:6px;padding:2px 0;font-size:10px;color:var(--t2);}
+.ipg-dot{width:4px;height:4px;border-radius:50%;background:var(--orange);margin-top:5px;flex-shrink:0;}
+
+/* PDF BUTTON */
+.pdfbtn{background:linear-gradient(135deg,var(--blue),#1d4ed8);border:none;border-radius:var(--rs);
+  padding:8px;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:700;
+  cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .2s;}
+.pdfbtn:hover{opacity:.85;}
+
+/* SUMMARY */
+.summary-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.summary-body{padding:14px 18px;display:flex;flex-direction:column;gap:10px;}
+.sum-para{font-size:11px;color:var(--t2);line-height:1.8;}
+.sum-para b{color:var(--t1);}
+.sum-para .red{color:var(--red);}
+.sum-para .green{color:var(--green);}
+.sum-para .yellow{color:var(--yellow);}
+.sum-block{background:var(--bg2);border-radius:var(--rs);padding:10px 13px;border-left:3px solid var(--orange);}
+.sum-block-title{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--orange);margin-bottom:7px;}
+.sum-list{display:flex;flex-direction:column;gap:4px;}
+.sum-li{font-size:10.5px;color:var(--t2);line-height:1.5;display:flex;gap:8px;}
+.sum-li::before{content:'—';color:var(--t3);flex-shrink:0;}
+.sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+.sum-stat{background:var(--bg2);border-radius:var(--rs);padding:9px 11px;text-align:center;}
+.sum-stat-val{font-size:18px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;}
+.sum-stat-lbl{font-size:8.5px;color:var(--t3);margin-top:3px;}
+
+/* DONUT */
+.donut-sect{border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:18px;padding:13px 14px;}
+.dwrap{position:relative;width:80px;height:80px;flex-shrink:0;}
+.dsvg{transform:rotate(-90deg);}
+.dcenter{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.dpct{font-size:17px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;}
+.dsub{font-size:7.5px;color:var(--t3);margin-top:1px;}
+.dleg{display:flex;flex-direction:column;gap:5px;}
+.dl{display:flex;align-items:center;justify-content:space-between;gap:9px;font-size:10px;}
+.dldot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-right:3px;}
+.dll{display:flex;align-items:center;color:var(--t2);}
+.dlv{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;}
+
+/* DEV CHART */
+.devwrap{padding:11px 12px;display:flex;flex-direction:column;gap:6px;}
+.devrow{display:flex;align-items:center;gap:6px;}
+.devlbl{width:110px;font-size:8.5px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;}
+.devcont{flex:1;height:12px;position:relative;display:flex;align-items:center;}
+.devctr{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.1);}
+.devbar{height:7px;border-radius:3px;position:absolute;}
+.dpos{left:50%;}
+.dneg{right:50%;}
+.devval{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;width:32px;text-align:right;flex-shrink:0;}
+
+/* RIGHT SIDEBAR */
+.sr{width:220px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);
+  padding:11px 9px;display:flex;flex-direction:column;gap:9px;align-self:flex-start;
+  position:sticky;top:82px;max-height:calc(100vh - 82px);overflow-y:auto;}
+.statbox{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;}
+.sbrow{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
+.sbrow+.sbrow{border-top:1px solid var(--border);}
+.sbk{font-size:9px;color:var(--t2);}
+.sbv{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;}
+.pcard{border-radius:var(--rs);padding:8px 9px;border:1.5px solid var(--border);transition:all .15s;cursor:pointer;}
+.pcard:hover{border-color:var(--orange);background:rgba(245,124,40,.04);}
+.pcn{font-size:9.5px;font-weight:700;line-height:1.3;margin-bottom:2px;}
+.pcb{font-size:8px;color:var(--t2);margin-bottom:4px;}
+.pcrow{display:flex;align-items:center;gap:4px;margin-bottom:3px;}
+.pcbg{flex:1;height:4px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
+.pcfill{height:100%;border-radius:3px;}
+.pcpct{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;}
+.pcmeta{display:flex;justify-content:space-between;align-items:center;margin-top:2px;}
+.pcsm{font-size:8px;color:var(--t3);}
+
+/* LOADING */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;
+  justify-content:center;flex-direction:column;gap:12px;z-index:999;transition:opacity .4s;}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--orange);
+  border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ltxt{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;}
+.empty{padding:24px;text-align:center;color:var(--t3);font-size:11px;}
+
+/* MODAL */
+.mov{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;
+  justify-content:center;z-index:200;}
+.mbox{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px;
+  width:420px;max-width:95vw;}
+.mtitle{font-size:13px;font-weight:700;margin-bottom:5px;}
+.mdesc{font-size:11px;color:var(--t2);margin-bottom:14px;line-height:1.6;}
+.minput{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);
+  padding:7px 11px;color:var(--t1);font-family:'JetBrains Mono',monospace;font-size:11px;
+  outline:none;margin-bottom:9px;}
+.minput:focus{border-color:var(--orange);}
+
+/* DEMO FAB */
+.demo-fab{position:fixed;bottom:14px;left:14px;z-index:150;padding:5px 11px;border-radius:20px;
+  background:rgba(17,31,50,0.9);border:1.5px solid var(--border);color:var(--t3);font-size:9px;
+  font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;
+  backdrop-filter:blur(8px);}
+.demo-fab:hover{border-color:var(--orange);color:var(--orange);}
+
+/* EXPAND HINT */
+.expand-hint{font-size:7.5px;color:var(--t3);margin-top:2px;}
+.row-chevron{font-size:9px;color:var(--t3);transition:transform .2s;}
+.expanded .row-chevron{transform:rotate(90deg);}
+
+/* Week dropdown for weeks 6+ */
+.wk-more-sel{padding:2px 6px;border-radius:6px;font-size:9px;font-weight:700;border:1.5px solid var(--border);
+  background:var(--bg3);color:var(--t2);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;
+  outline:none;transition:all .15s;height:24px;}
+.wk-more-sel:hover,.wk-more-sel:focus{border-color:var(--teal);color:var(--teal);}
+.wk-more-sel option{background:var(--bg2);}
+.wk-more-sel.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+
+/* ── EXPAND DETAIL: Timeline & Action ── */
+.exp-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.exp-meta-box{background:var(--bg2);border-radius:7px;padding:9px 11px;border:1px solid var(--border);}
+.exp-meta-title{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--teal);margin-bottom:7px;display:flex;align-items:center;gap:5px;}
+.exp-meta-rows{display:flex;flex-direction:column;gap:4px;}
+.exp-meta-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;
+  padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.exp-meta-row:last-child{border-bottom:none;}
+.exp-meta-key{font-size:8.5px;color:var(--t3);flex-shrink:0;min-width:90px;padding-top:1px;}
+.exp-meta-val{font-size:8.5px;font-weight:600;color:var(--t1);font-family:'JetBrains Mono',monospace;
+  text-align:right;word-break:break-word;}
+.exp-meta-val.na{color:var(--t3);font-style:italic;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;}
+.exp-meta-val.esc-ya{color:var(--red);}
+.exp-meta-val.esc-tdk{color:var(--green);}
+.exp-meta-ket{font-size:8px;color:var(--t2);margin-top:3px;line-height:1.5;
+  padding:4px 6px;background:rgba(239,68,68,.07);border-radius:4px;border-left:2px solid var(--red);}
+
+/* ── MEDIA QUERY: TABLET (≤ 1024px) ── */
+@media (max-width: 1024px) {
+  /* Layout jadi 1 kolom */
+  .layout{flex-direction:column;}
+
+  /* Sidebar kiri & kanan: full width, non-sticky */
+  .sl{
+    width:100%;position:static;max-height:none;
+    flex-direction:row;flex-wrap:wrap;gap:8px;
+    border-right:none;border-bottom:1px solid var(--border);
+    padding:10px 12px;
+  }
+  .sl .stitle{width:100%;margin-bottom:0;}
+  .sl .ac{flex:1;min-width:140px;}
+  .sl > div:last-child{width:100%;}
+
+  .sr{
+    width:100%;position:static;max-height:none;
+    flex-direction:row;flex-wrap:wrap;gap:8px;
+    border-left:none;border-top:1px solid var(--border);
+    padding:10px 12px;
+  }
+  .sr .stitle{width:100%;}
+  .sr .statbox{flex:1;min-width:180px;}
+  .sr .pdfbtn{display:none;} /* hidden at tablet, sudah ada di sidebar kiri */
+  #pcards{flex-direction:row!important;flex-wrap:wrap;gap:6px!important;}
+  #pcards .pcard{min-width:200px;flex:1;}
+
+  /* center area */
+  .mc{padding:12px 10px;}
+
+  /* KPI 2 kolom */
+  .krow{grid-template-columns:repeat(2,1fr);}
+
+  /* Row 2 */
+  .row2{grid-template-columns:1fr;}
+
+  /* Tabel bisa scroll horizontal */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{min-width:800px;table-layout:auto;}
+
+  /* Header filter wrap */
+  .hdr-row1,.hdr-row2{flex-wrap:wrap;gap:6px;}
+  .hdiv{display:none;}
+
+  /* Expand meta grid */
+  .exp-meta-grid{grid-template-columns:1fr;}
+}
+
+/* ── MEDIA QUERY: MOBILE (≤ 480px) ── */
+@media (max-width: 480px) {
+  /* Header lebih kompak */
+  .hdr{padding:5px 8px;}
+  .htitle h1{font-size:10px;}
+  .htitle span{font-size:7.5px;}
+  .logo{width:24px;height:24px;font-size:10px;}
+
+  /* Brand pills scroll horizontal */
+  .hpills{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    padding-bottom:3px;max-width:100%;}
+  .pill{flex-shrink:0;}
+
+  /* Week group wrap */
+  .wk-group{flex-wrap:wrap;gap:3px;}
+
+  /* Filter dropdowns full row */
+  .fgrp{flex-wrap:wrap;}
+  .fsel{max-width:100%;}
+
+  /* Sidebar kiri: status cards 2 per baris */
+  .sl .ac{min-width:calc(50% - 4px);}
+
+  /* KPI 2 kolom */
+  .krow{grid-template-columns:repeat(2,1fr);gap:6px;}
+
+  /* Tabel scroll, lebih compact */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{min-width:800px;table-layout:auto;}
+  tbody td{padding:6px 7px;font-size:10px;}
+  thead th{padding:6px 7px;font-size:7.5px;}
+
+  /* Expand disiplin 2 kolom */
+  .dis-grid{grid-template-columns:repeat(2,1fr);}
+
+  /* Expand meta 1 kolom */
+  .exp-meta-grid{grid-template-columns:1fr;}
+
+  /* Right sidebar stack */
+  .sr{flex-direction:column;}
+  #pcards{flex-direction:column!important;}
+  #pcards .pcard{min-width:unset;}
+
+  /* Summary grid 2 kolom */
+  .sum-grid{grid-template-columns:repeat(2,1fr);}
+
+  /* Row 2 */
+  .row2{grid-template-columns:1fr;}
+
+  /* Donut horizontal */
+  .donut-sect{flex-direction:row;gap:12px;padding:10px;}
+
+  /* Demo fab lebih kecil */
+  .demo-fab{font-size:8.5px;padding:4px 9px;}
+}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div><div class="ltxt">Memuat PM Dashboard…</div></div>
+
+<!-- HEADER 2 BARIS -->
+<div class="hdr">
+  <!-- Baris 1: Logo, Judul, Brand Pills, Actions -->
+  <div class="hdr-row1">
+    <div class="logo">PM</div>
+    <div class="htitle">
+      <h1>PM Dashboard — FnB 2026</h1>
+      <span>Anotechhub · Real-time Monitor</span>
+    </div>
+    <div class="hdiv"></div>
+    <!-- Brand Pills -->
+    <div class="hpills">
+      <button class="pill all active" onclick="setBrand('ALL',this)">All Brand</button>
+      <button class="pill" onclick="setBrand('Chatime',this)">Chatime</button>
+      <button class="pill" onclick="setBrand('Gindaco',this)">Gindaco</button>
+      <button class="pill" onclick="setBrand('Go Go Curry',this)">GoGoCurry</button>
+      <button class="pill" onclick="setBrand('88Seoul',this)">88Seoul</button>
+      <button class="pill" onclick="setBrand('Molly Tea',this)">Molly Tea</button>
+    </div>
+    <div class="hright">
+      <button class="btn btn-o" onclick="refreshData()">↻ Refresh</button>
+      <button class="btn btn-g" onclick="showSettings()">⚙ GAS</button>
+      <button id="themeBtn" onclick="toggleTheme()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--t1);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">🌙 Dark</button>
+      <div class="live"><span class="ldot"></span><span id="lup">—</span></div>
+    </div>
+  </div>
+
+  <!-- Baris 2: Week Filter + Dropdowns PM & Kontraktor -->
+  <div class="hdr-row2">
+    <!-- Week: tampilkan 1-5, sisanya dropdown -->
+    <div class="wk-group">
+      <span class="wk-lbl">Week</span>
+      <button class="wkbtn active" id="wkAll" onclick="setWeek('ALL',this)">All</button>
+      <button class="wkbtn" id="wk1" onclick="setWeek(1,this)">1</button>
+      <button class="wkbtn" id="wk2" onclick="setWeek(2,this)">2</button>
+      <button class="wkbtn" id="wk3" onclick="setWeek(3,this)">3</button>
+      <button class="wkbtn" id="wk4" onclick="setWeek(4,this)">4</button>
+      <button class="wkbtn" id="wk5" onclick="setWeek(5,this)">5</button>
+      <select class="wk-more-sel" id="wkMore" onchange="setWeekDrop(this)">
+        <option value="">W6+…</option>
+        <option value="6">W6</option>
+        <option value="7">W7</option>
+        <option value="8">W8</option>
+        <option value="9">W9</option>
+        <option value="10">W10</option>
+        <option value="11">W11</option>
+        <option value="12">W12</option>
+        <option value="13">W13</option>
+        <option value="14">W14</option>
+        <option value="15">W15</option>
+        <option value="16">W16</option>
+        <option value="17">W17</option>
+        <option value="18">W18</option>
+        <option value="19">W19</option>
+        <option value="20">W20</option>
+      </select>
+    </div>
+
+    <div class="hdiv"></div>
+
+    <!-- Filter PM -->
+    <div class="fgrp">
+      <span class="fsel-label">PM</span>
+      <select class="fsel" id="selPM" onchange="fPM=this.value;applyF()">
+        <option value="ALL">Semua PM</option>
+      </select>
+    </div>
+
+    <!-- Filter Kontraktor -->
+    <div class="fgrp">
+      <span class="fsel-label">Kontraktor</span>
+      <select class="fsel" id="selKtr" onchange="fKtr=this.value;applyF()">
+        <option value="ALL">Semua Kontraktor</option>
+      </select>
+    </div>
+
+    <!-- Filter Tipe Project -->
+    <div class="fgrp">
+      <span class="fsel-label">Tipe Project</span>
+      <select class="fsel" id="selTipe" onchange="fTipe=this.value;applyF()">
+        <option value="ALL">Semua Tipe</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <div class="sl">
+    <div class="stitle">Status Alert</div>
+    <div class="ac cr"><div class="ac-n" id="acCr" style="color:var(--red)">—</div><div class="ac-l">Critical Delay</div><div class="ac-s" id="acCrS">—</div></div>
+    <div class="ac mn"><div class="ac-n" id="acMn" style="color:var(--yellow)">—</div><div class="ac-l">Minor Delay</div><div class="ac-s" id="acMnS">—</div></div>
+    <div class="ac in"><div class="ac-n" id="acIs" style="color:var(--blue)">—</div><div class="ac-l">Open Issues</div><div class="ac-s">Perlu tindak lanjut</div></div>
+    <div class="ac ok"><div class="ac-n" id="acOk" style="color:var(--green)">—</div><div class="ac-l">On Track / Early</div><div class="ac-s" id="acOkS">—</div></div>
+
+    <!-- Alert Deadline: SPK & Opening -->
+    <div id="deadlineAlert" style="margin-top:6px;display:none">
+      <div class="stitle" style="margin-bottom:4px">⏰ Deadline Mendekat</div>
+      <div id="deadlineList"></div>
+    </div>
+
+    <!-- Filter SM sebagai dropdown -->
+    <div style="margin-top:4px">
+      <div class="stitle" style="margin-bottom:6px">Filter SM</div>
+      <div class="sm-dropdown-wrap">
+        <select class="fsel-full" id="selSM" onchange="filterSMDrop(this.value)">
+          <option value="ALL">Semua SM</option>
+        </select>
+        <!-- Info SM yang dipilih -->
+        <div id="smInfo" style="display:none;background:var(--bg3);border-radius:6px;padding:7px 9px;margin-top:4px;">
+          <div id="smInfoName" style="font-size:10px;font-weight:700;color:var(--orange);"></div>
+          <div id="smInfoBrand" style="font-size:8.5px;color:var(--t2);margin-top:2px;"></div>
+          <div id="smInfoCount" style="font-size:8.5px;color:var(--t3);margin-top:2px;font-family:'JetBrains Mono',monospace;"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="pdfbtn" onclick="exportPDF()">🖨 Export PDF</button>
+  </div>
+
+  <!-- CENTER -->
+  <div class="mc">
+    <div id="abn" style="display:none"></div>
+
+    <!-- KPI -->
+    <div class="krow">
+      <div class="kpi kt"><div class="ktop"><span class="kico">📋</span><span class="ktrend tn" id="ktt">—</span></div><div class="kval" id="kt">—</div><div class="klbl">Total Project</div><div class="ksub" id="kts">—</div></div>
+      <div class="kpi ko"><div class="ktop"><span class="kico">✅</span><span class="ktrend tu" id="kot">—</span></div><div class="kval" id="ko">—</div><div class="klbl">On Track</div><div class="ksub" id="kos">—</div></div>
+      <div class="kpi km"><div class="ktop"><span class="kico">⚠️</span><span class="ktrend td" id="kmt">—</span></div><div class="kval" id="km">—</div><div class="klbl">Minor Delay</div><div class="ksub" id="kms">—</div></div>
+      <div class="kpi kc"><div class="ktop"><span class="kico">🔴</span><span class="ktrend td" id="kct">—</span></div><div class="kval" id="kc">—</div><div class="klbl">Critical Delay</div><div class="ksub" id="kcs">—</div></div>
+    </div>
+
+    <!-- Progress Table -->
+    <div class="card">
+      <div class="chd">
+        <div class="cht">📊 Detail Progress per Project</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:9px;color:var(--t3);">Klik baris → lihat 6 disiplin</span>
+          <div class="cbadge" id="tcount">—</div>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <colgroup>
+            <col style="width:18%">
+            <col style="width:12%">
+            <col style="width:12%">
+            <col style="width:5%">
+            <col style="width:14%">
+            <col style="width:7%">
+            <col style="width:7%">
+            <col style="width:9%">
+            <col style="width:12%">
+            <col style="width:4%">
+          </colgroup>
+          <thead><tr>
+            <th>Project</th>
+            <th>PM / SM</th>
+            <th>Kontraktor</th>
+            <th style="text-align:center">Wk</th>
+            <th>Progress Aktual</th>
+            <th style="text-align:center">Target</th>
+            <th style="text-align:center">Deviasi</th>
+            <th>Sisa Hari</th>
+            <th>Status</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="tbody"><tr><td colspan="10" class="empty">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="row2">
+      <div class="card">
+        <div class="chd"><div class="cht">🚨 Open Issues</div><div class="cbadge" id="icnt">—</div></div>
+        <div id="ilist"><div class="empty">Memuat…</div></div>
+      </div>
+      <div class="card">
+        <div class="chd"><div class="cht">🟢 Health Status</div></div>
+        <div class="donut-sect">
+          <div class="dwrap">
+            <svg class="dsvg" width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="9"/>
+              <circle id="dOn" cx="40" cy="40" r="28" fill="none" stroke="#22c55e" stroke-width="9" stroke-dasharray="0 176" stroke-linecap="round" style="transition:stroke-dasharray 1s ease"/>
+              <circle id="dMn" cx="40" cy="40" r="28" fill="none" stroke="#f59e0b" stroke-width="9" stroke-dasharray="0 176" stroke-linecap="round" style="transition:stroke-dasharray 1s ease"/>
+              <circle id="dCr" cx="40" cy="40" r="28" fill="none" stroke="#ef4444" stroke-width="9" stroke-dasharray="0 176" stroke-linecap="round" style="transition:stroke-dasharray 1s ease"/>
+            </svg>
+            <div class="dcenter"><div class="dpct" id="dpct" style="color:var(--green)">—%</div><div class="dsub">On Track</div></div>
+          </div>
+          <div class="dleg">
+            <div class="dl"><div class="dll"><div class="dldot" style="background:var(--green)"></div>On Track</div><div class="dlv" id="dlo" style="color:var(--green)">—</div></div>
+            <div class="dl"><div class="dll"><div class="dldot" style="background:var(--yellow)"></div>Minor Delay</div><div class="dlv" id="dlm" style="color:var(--yellow)">—</div></div>
+            <div class="dl"><div class="dll"><div class="dldot" style="background:var(--red)"></div>Critical Delay</div><div class="dlv" id="dlc" style="color:var(--red)">—</div></div>
+            <div class="dl"><div class="dll"><div class="dldot" style="background:var(--teal)"></div>Early Stage</div><div class="dlv" id="dle" style="color:var(--teal)">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deviation Chart -->
+    <div class="card">
+      <div class="chd"><div class="cht">📉 Deviasi Progress vs Target per Project</div></div>
+      <div class="devwrap" id="devbars"><div class="empty">—</div></div>
+    </div>
+
+    <!-- Right sidebar stats — ditambahkan ke bawah di center jika layar kecil, tapi secara default .sr tetap ada -->
+
+    <!-- Written Summary -->
+    <div class="summary-section">
+      <div class="chd"><div class="cht">📝 Ringkasan Eksekutif</div><div class="cbadge" id="sumDate">—</div></div>
+      <div class="summary-body" id="summaryBody">
+        <div class="empty">Memuat ringkasan…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="sr">
+    <div class="stitle">Ringkasan</div>
+    <div class="statbox">
+      <div class="sbrow"><span class="sbk">Total Project</span><span class="sbv" id="sbT">—</span></div>
+      <div class="sbrow"><span class="sbk">Avg Progress</span><span class="sbv" id="sbA">—</span></div>
+      <div class="sbrow"><span class="sbk">Open Issues</span><span class="sbv" id="sbI">—</span></div>
+      <div class="sbrow"><span class="sbk">Brand Aktif</span><span class="sbv" id="sbB">—</span></div>
+    </div>
+    <div class="stitle" style="margin-top:2px">All Projects</div>
+    <div id="pcards" style="display:flex;flex-direction:column;gap:4px"><div class="empty">—</div></div>
+  </div>
+</div>
+
+<!-- Demo FAB -->
+<button class="demo-fab" onclick="showSettings()">🔧 Konfigurasi / Demo</button>
+
+<!-- Modal -->
+<div class="mov" id="modal" style="display:none">
+  <div class="mbox">
+    <div class="mtitle">⚙ Konfigurasi GAS Endpoint</div>
+    <div class="mdesc">Paste URL deployment Google Apps Script (<code style="color:var(--orange)">doGet</code>) untuk fetch data real-time dari Google Sheets.</div>
+    <input type="text" class="minput" id="gurl" placeholder="https://script.google.com/macros/s/.../exec">
+    <button class="btn btn-o" style="width:100%;justify-content:center;padding:9px;margin-bottom:7px" onclick="saveGAS()">Simpan & Muat Data</button>
+    <button class="btn btn-g" style="width:100%;justify-content:center;padding:8px;margin-bottom:5px" onclick="useDemo()">Gunakan Data Demo</button>
+    <button class="btn btn-g" style="width:100%;justify-content:center;padding:8px" onclick="closeM()">Batal</button>
+  </div>
+</div>
+
+<script>
+let GAS='', raw=[], fil=[];
+let fBrand='ALL', fWeek='ALL', fSM='ALL', fPM='ALL', fKtr='ALL', fTipe='ALL';
+let expandedIdx=null;
+
+const BCLS={'Chatime':'bt-c','Gindaco':'bt-g','Go Go Curry':'bt-gg','88Seoul':'bt-s','Molly Tea':'bt-m'};
+const BCOL={'Chatime':'#ff6961','Gindaco':'#60a5fa','Go Go Curry':'#fbbf24','88Seoul':'#c084fc','Molly Tea':'#2dd4bf'};
+const BRANDS=['Chatime','Gindaco','Go Go Curry','88Seoul','Molly Tea'];
+
+/* ─── DEMO DATA ─── */
+function demoData(){return[
+  {
+    namaProject:'Chatime Mall Kelapa Gading', mingguKe:3,
+    aktual:72, target:75, deviasi:-3, status:'Minor Delay',
+    namaPM:'Maulidin', sm:'Agus Darmawan', brand:'Chatime',
+    kontraktor:'PT. Hutama Yasa Kreasi', tipeProject:'New Store',
+    spkStart:'2026-01-15', spkEnd:'2026-06-30', targetOpening:'2026-07-05',
+    persiapan:95, sipil:80, me:65, plumbing:55, hvac:40, fixture:20,
+    issues:['Approval IMB belum keluar','Material kaca terlambat'], week:3,
+    lokasi:'Mall Kelapa Gading', progress:72
+  },
+  {
+    namaProject:'Gindaco Pondok Indah Mall', mingguKe:2,
+    aktual:45, target:40, deviasi:5, status:'On Track',
+    namaPM:'Dede Sulaiman', sm:'Denny Setiawan', brand:'Gindaco',
+    kontraktor:'PT. Inkrea', tipeProject:'Relayout',
+    spkStart:'2026-02-01', spkEnd:'2026-07-15',
+    persiapan:100, sipil:70, me:50, plumbing:30, hvac:15, fixture:0,
+    issues:[], week:2,
+    lokasi:'Pondok Indah Mall', progress:45
+  },
+  {
+    namaProject:'Go Go Curry Grand Indonesia', mingguKe:4,
+    aktual:88, target:95, deviasi:-7, status:'Critical Delay',
+    namaPM:'Maulidin', sm:'Edi Setiawan', brand:'Go Go Curry',
+    kontraktor:'PT. Cakra Bangun Sukses', tipeProject:'New Store',
+    spkStart:'2025-12-01', spkEnd:'2026-05-10', targetOpening:'2026-06-01',
+    persiapan:100, sipil:95, me:88, plumbing:80, hvac:75, fixture:60,
+    issues:['Kontraktor tidak mobilisasi','Ketersediaan material lokal'], week:4,
+    lokasi:'Grand Indonesia', progress:88
+  },
+  {
+    namaProject:'88Seoul Summarecon Bekasi', mingguKe:1,
+    aktual:15, target:10, deviasi:5, status:'Early Stage',
+    namaPM:'Dede Sulaiman', sm:'Indratama', brand:'88Seoul',
+    kontraktor:'PT. Mitra Bangun Asri', tipeProject:'Touch Up',
+    spkStart:'2026-04-01', spkEnd:'2026-09-30',
+    persiapan:60, sipil:20, me:5, plumbing:0, hvac:0, fixture:0,
+    issues:[], week:1,
+    lokasi:'Summarecon Bekasi', progress:15
+  },
+  {
+    namaProject:'Molly Tea Tunjungan Plaza', mingguKe:3,
+    aktual:65, target:70, deviasi:-5, status:'Minor Delay',
+    namaPM:'Maulidin', sm:'Satrijo Jatmiko', brand:'Molly Tea',
+    kontraktor:'PT. Hutama Yasa Kreasi', tipeProject:'Relokasi',
+    spkStart:'2026-01-20', spkEnd:'2026-06-20', targetOpening:'2026-05-31',
+    persiapan:100, sipil:85, me:70, plumbing:60, hvac:45, fixture:25,
+    issues:['Mall belum release area'], week:3,
+    lokasi:'Tunjungan Plaza', progress:65
+  },
+  {
+    namaProject:'Chatime Lippo Mall Kemang', mingguKe:3,
+    aktual:78, target:75, deviasi:3, status:'On Track',
+    namaPM:'Dede Sulaiman', sm:'Setiahandy B.', brand:'Chatime',
+    kontraktor:'PT. Inkrea', tipeProject:'Touch Up + Hotdak',
+    spkStart:'2026-01-10', spkEnd:'2026-07-01',
+    persiapan:100, sipil:90, me:80, plumbing:70, hvac:0, fixture:40,
+    issues:[], week:3,
+    lokasi:'Lippo Mall Kemang', progress:78
+  },
+  {
+    namaProject:'Gindaco Pakuwon Mall Jogja', mingguKe:2,
+    aktual:30, target:40, deviasi:-10, status:'Critical Delay',
+    namaPM:'Maulidin', sm:'Zulfikar', brand:'Gindaco',
+    kontraktor:'Lainnya', tipeProject:'Bongkaran Bare',
+    spkStart:'2025-11-15', spkEnd:'2026-04-30', targetOpening:'2026-06-07',
+    persiapan:85, sipil:45, me:20, plumbing:10, hvac:0, fixture:0,
+    issues:['Approval desain dari mall','Stainless steel indent China'], week:2,
+    lokasi:'Pakuwon Mall Jogja', progress:30
+  },
+];}
+
+/* ─── INIT ─── */
+window.addEventListener('DOMContentLoaded',()=>{
+  initTheme();
+  GAS=localStorage.getItem('pm26')||'';
+  setTimeout(()=>{ GAS?fetchGAS():(hideLoad(),showSettings()); },600);
+
+  /* Row click delegation */
+  const tb=document.getElementById('tbody');
+  function handleRowTap(e){
+    const tr=e.target.closest('tr.trow');
+    if(!tr) return;
+    e.preventDefault();
+    toggleRow(parseInt(tr.dataset.idx));
+  }
+  tb.addEventListener('click', handleRowTap);
+  tb.addEventListener('touchend', handleRowTap);
+});
+
+function fetchGAS(){
+  fetch(GAS).then(r=>r.json())
+  .then(d=>{
+    /* GAS return: { ok:true, data:[...] } */
+    var rows = d.data || d.projects || d.rows || [];
+    if(!Array.isArray(rows)) rows=[];
+    raw = rows.filter(function(r){ return r; }).map(normalizeRow);
+
+    if(!raw.length){
+      raw=demoData().map(normalizeRow);
+      g('lup').textContent='Demo Mode (GSheet kosong)';
+    } else {
+      g('lup').textContent=fmtT(new Date());
+    }
+  })
+  .catch(function(err){
+    raw=demoData().map(normalizeRow);
+    g('lup').textContent='Demo Mode';
+  })
+  .finally(()=>{ applyF(); hideLoad(); });
+}
+
+/* Parse tanggal dari berbagai format → YYYY-MM-DD string (untuk new Date()) */
+function parseDate(val){
+  if(!val) return '';
+  if(val instanceof Date) return val.toISOString().slice(0,10);
+  var s = String(val).trim();
+  if(!s || s==='-' || s==='—') return '';
+  // dd/MM/yyyy → yyyy-MM-dd
+  var m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m1) return m1[3]+'-'+m1[2].padStart(2,'0')+'-'+m1[1].padStart(2,'0');
+  // dd-MM-yyyy → yyyy-MM-dd
+  var m2 = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if(m2) return m2[3]+'-'+m2[2].padStart(2,'0')+'-'+m2[1].padStart(2,'0');
+  // yyyy-MM-dd sudah benar
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  return s;
+}
+
+/* fmtD global — konversi string tanggal apapun ke tampilan dd Mon yyyy */
+var BULAN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+function fmtD(s){
+  if(!s) return null;
+  var iso = parseDate(s);
+  if(!iso) return null;
+  var p = iso.split('-');
+  if(p.length !== 3) return null;
+  var dd=parseInt(p[2]), mm=parseInt(p[1])-1, yyyy=parseInt(p[0]);
+  if(isNaN(dd)||isNaN(mm)||isNaN(yyyy)) return null;
+  if(mm<0||mm>11) return null;
+  return (dd<10?'0':'')+dd+' '+BULAN[mm]+' '+yyyy;
+}
+
+function normalizeRow(d){
+  const steps = d.steps || {};
+  /* ── Aktual: coba semua kemungkinan nama field ── */
+  const aktual = parseF(d['Aktual Progres'] ?? d['Aktual Progress'] ?? d.aktual ?? d.progress);
+  /* ── Target ── */
+  const target = parseF(d['Target Pekan ini'] ?? d['Target Pekan Ini'] ?? d['Target Progress'] ?? d.target);
+  /* ── Status ── */
+  const status = (d['Status Project'] || d.status || d.Status || 'Early Stage').toString().trim();
+  /* ── PM & SM ── */
+  const namaPM = (d['Project Manager'] || d.namaPM || d.NamaPM || d.pm || d.PM || '—').toString().trim();
+  const sm     = (d['Site Manager']    || d.namaSM || d.sm     || d.SM || '—').toString().trim();
+  return {
+    namaProject:  (d['Nama Project']||d.namaProject||d.NamaProject||d.project||d.Project||d.lokasi||'—').toString().trim(),
+    mingguKe:     parseF(d['Minggu Ke'] ?? d.mingguKe ?? d.week) || 0,
+    aktual:       aktual,
+    target:       target,
+    deviasi:      parseF(d.delta ?? d.deviasi ?? d.Deviasi ?? (aktual - target)),
+    status:       status,
+    namaPM:       namaPM,
+    sm:           sm,
+    brand:        (d.brand||d.Brand||d.BRAND||d.brandName||d.brand_name||'—').toString().trim(),
+    kontraktor:   (d.Kontraktor||d.kontraktor||'—').toString().trim(),
+    tipeProject:  (d['Tipe Project']||d.tipeProject||'').toString().trim(),
+    spkStart:     parseDate(d['SPK mulai']    || d['SPK Mulai']   || d.spkStart),
+    spkEnd:       parseDate(d['SPK selesai']  || d['SPK Selesai'] || d.spkEnd),
+    periodeStart: parseDate(d['Periode Start']|| d.periodeStart),
+    periodeEnd:   parseDate(d['Periode End']  || d.periodeEnd),
+    targetOpening: parseDate(d['Target Opening'] || d.targetOpening),
+    aktualOpening: parseDate(d['Aktual Opening'] || d.aktualOpening),
+    etaMBO:       parseDate(d['ETA MBO 2']    || d.etaMBO2 || d.etaMBO),
+    rencana:      d['Rencana Kerja']|| d.rencana        || '',
+    carryOver:    d['Carry Over']   || d.carryOver      || '',
+    eskalasi:     d['Eskalasi PM']  || d.eskalasi       || 'Tidak',
+    eskalasiKet:  d['Detail Eskalasi'] || d.detailEskalasi || d.eskalasiKet || '',
+    kendala:      d['Issue & Kendala'] || d.kendala     || '',
+    persiapan:    parseF(steps.persiapan ?? d['Progres Persiapan'] ?? d['Persiapan (%)']          ?? d.persiapan),
+    sipil:        parseF(steps.sipil     ?? d['Progres Sipil']     ?? d['Sipil & Arsitektur (%)'] ?? d.sipil),
+    me:           parseF(steps.me        ?? d['Progres ME']        ?? d['ME (%)']                 ?? d.me),
+    plumbing:     parseF(steps.plumbing  ?? d['Progres Plumbing']  ?? d['Plumbing & Gas (%)']     ?? d.plumbing),
+    hvac:         parseF(steps.hvac      ?? d['Progres HVAC']      ?? d['HVAC (%)']               ?? d.hvac),
+    fixture:      parseF(steps.fixture   ?? d['Progres Fixture']   ?? d['Furniture & Fixture (%)']?? d.fixture),
+    issues:       d.issues || (d['Issue & Kendala'] ? [d['Issue & Kendala']] : []),
+    project:      d['Nama Project'] || d.namaProject || d.project || d.lokasi || '—',
+    week:         parseF(d['Minggu Ke'] ?? d.mingguKe ?? d.week) || 0,
+    progress:     aktual,
+    lokasi:       d.lokasi || '',
+  };
+}
+function parseF(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
+
+function refreshData(){ GAS?fetchGAS():showSettings(); }
+
+/* ─── BUILD DYNAMIC DROPDOWNS (PM, Kontraktor, SM) ─── */
+function buildDropdowns(){
+  /* PM dropdown */
+  const pms=[...new Set(raw.map(d=>d.namaPM).filter(Boolean).sort())];
+  const selPM=g('selPM');
+  const curPM=selPM.value||'ALL';
+  selPM.innerHTML='<option value="ALL">Semua PM</option>';
+  pms.forEach(p=>{ const o=document.createElement('option'); o.value=p; o.textContent=p; selPM.appendChild(o); });
+  if(pms.includes(curPM)) selPM.value=curPM;
+
+  /* Kontraktor dropdown */
+  const ktrs=[...new Set(raw.map(d=>d.kontraktor).filter(Boolean).sort())];
+  const selKtr=g('selKtr');
+  const curKtr=selKtr.value||'ALL';
+  selKtr.innerHTML='<option value="ALL">Semua Kontraktor</option>';
+  ktrs.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=k.length>28?k.substring(0,26)+'…':k; selKtr.appendChild(o); });
+  if(ktrs.includes(curKtr)) selKtr.value=curKtr;
+
+  /* SM dropdown */
+  const sms=[...new Set(raw.map(d=>d.sm).filter(Boolean).sort())];
+  const selSM=g('selSM');
+  const curSM=selSM.value||'ALL';
+  selSM.innerHTML='<option value="ALL">Semua SM</option>';
+  sms.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; selSM.appendChild(o); });
+  if(sms.includes(curSM)) selSM.value=curSM; else selSM.value='ALL';
+
+  /* Tipe Project dropdown — urutan tetap sesuai definisi */
+  const TIPE_ORDER=['New Store','Relayout','Relokasi','Touch Up','Touch Up + Hotdak','Bongkaran Bare'];
+  const tipes=[...new Set(raw.map(d=>d.tipeProject).filter(Boolean))].sort((a,b)=>TIPE_ORDER.indexOf(a)-TIPE_ORDER.indexOf(b));
+  const selTipe=g('selTipe');
+  const curTipe=selTipe.value||'ALL';
+  selTipe.innerHTML='<option value="ALL">Semua Tipe</option>';
+  tipes.forEach(t=>{ const o=document.createElement('option'); o.value=t; o.textContent=t; selTipe.appendChild(o); });
+  if(tipes.includes(curTipe)) selTipe.value=curTipe; else selTipe.value='ALL';
+}
+
+/* ─── FILTER HANDLERS ─── */
+function setBrand(v,btn){
+  fBrand=v.trim();
+  document.querySelectorAll('.hpills .pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); applyF();
+}
+function setWeek(v,btn){
+  fWeek=v;
+  // deactivate all week buttons & dropdown
+  document.querySelectorAll('.wkbtn').forEach(b=>b.classList.remove('active'));
+  g('wkMore').value='';
+  g('wkMore').classList.remove('active');
+  btn.classList.add('active');
+  applyF();
+}
+function setWeekDrop(sel){
+  const v=sel.value;
+  if(!v){ sel.classList.remove('active'); return; }
+  fWeek=parseInt(v);
+  document.querySelectorAll('.wkbtn').forEach(b=>b.classList.remove('active'));
+  sel.classList.add('active');
+  applyF();
+}
+function filterSMDrop(v){
+  fSM=v;
+  if(v==='ALL'){
+    g('smInfo').style.display='none';
+  } else {
+    const smData=raw.filter(d=>d.sm===v);
+    const brands=[...new Set(smData.map(d=>d.brand))].join(', ');
+    g('smInfoName').textContent=v;
+    g('smInfoBrand').textContent=brands;
+    g('smInfoCount').textContent=smData.length+' project ditangani';
+    g('smInfo').style.display='block';
+  }
+  applyF();
+}
+
+function applyF(){
+  const norm=s=>(s||'').toLowerCase().replace(/\s+/g,'');
+  fil=raw.filter(d=>{
+    const b = fBrand==='ALL' || norm(d.brand)===norm(fBrand);
+    const w = fWeek==='ALL'  || String(d.mingguKe)===String(fWeek);
+    const s = fSM==='ALL'    || d.sm===fSM;
+    const p = fPM==='ALL'    || d.namaPM===fPM;
+    const k = fKtr==='ALL'   || d.kontraktor===fKtr;
+    const t = fTipe==='ALL'  || d.tipeProject===fTipe;
+    return b&&w&&s&&p&&k&&t;
+  });
+  expandedIdx=null;
+  buildDropdowns();
+  renderAll();
+}
+
+function renderAll(){
+  rSL(); rDeadlineAlert(); rKPI(); rTable(); rIssues(); rDonut(); rDev(); rSR(); rAlert(); rSummary();
+}
+
+/* ─── LEFT SIDEBAR (status alert only, SM sudah jadi dropdown) ─── */
+function rSL(){
+  const cr=fil.filter(d=>d.status==='Critical Delay');
+  const mn=fil.filter(d=>d.status==='Minor Delay');
+  const ok=fil.filter(d=>['On Track','Early Stage'].includes(d.status));
+  const is=fil.reduce((s,d)=>s+(d.issues||[]).length,0);
+  g('acCr').textContent=cr.length;
+  g('acCrS').textContent=cr.length?cr.map(d=>d.namaProject.split(' ').slice(0,2).join(' ')).join(', '):'Semua aman ✓';
+  g('acMn').textContent=mn.length;
+  g('acMnS').textContent=mn.length+' perlu monitoring';
+  g('acIs').textContent=is;
+  g('acOk').textContent=ok.length;
+  g('acOkS').textContent=fil.length?Math.round(ok.length/fil.length*100)+'% dari total':'—';
+}
+
+/* ─── KPI ─── */
+function rKPI(){
+  const t=fil.length, on=fil.filter(d=>d.status==='On Track'||d.status==='Early Stage').length;
+  const mn=fil.filter(d=>d.status==='Minor Delay').length, cr=fil.filter(d=>d.status==='Critical Delay').length;
+  g('kt').textContent=t; g('kts').textContent=BRANDS.filter(b=>fil.find(d=>d.brand===b)).length+' brand aktif'; g('ktt').textContent=t+' proj';
+  g('ko').textContent=on; g('kos').textContent=t?Math.round(on/t*100)+'% dari total':'—'; g('kot').textContent=t?'+'+Math.round(on/t*100)+'%':'—';
+  g('km').textContent=mn; g('kms').textContent=t?Math.round(mn/t*100)+'% dari total':'—'; g('kmt').textContent=mn?mn+' proj':'0';
+  g('kc').textContent=cr; g('kcs').textContent=t?Math.round(cr/t*100)+'% dari total':'—'; g('kct').textContent=cr?'⚠ '+cr:'✓ 0';
+}
+
+/* ─── SISA HARI ─── */
+function hDiff(dateStr){
+  if(!dateStr) return null;
+  var iso=parseDate(dateStr);
+  if(!iso) return null;
+  var p=iso.split('-');
+  if(p.length!==3) return null;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const end=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
+  if(isNaN(end)) return null;
+  return Math.round((end-today)/(1000*60*60*24));
+}
+function alertCls(d){
+  if(d===null) return null;
+  if(d>20)  return 'sisa-ok';
+  if(d>10)  return 'sisa-warn';
+  return 'sisa-over';
+}
+function alertLabel(d, prefix){
+  if(d===null) return null;
+  if(d>=0) return `${prefix} H-${d}`;
+  return `${prefix} +${Math.abs(d)}h`;
+}
+function sisaHari(spkEnd, targetOpening){
+  const parts=[];
+  /* SPK */
+  const ds=hDiff(spkEnd);
+  const clsS=alertCls(ds);
+  if(clsS){
+    var _sp=parseDate(spkEnd).split('-');
+    const end=new Date(parseInt(_sp[0]),parseInt(_sp[1])-1,parseInt(_sp[2]));
+    const isCrit=ds<=10&&ds>=0;
+    parts.push(`<span class="${clsS}"${isCrit?' style="font-size:11px;font-weight:800"':''}>${alertLabel(ds,'SPK')}</span><div class="sisa-lbl">SPK ${fmtDate(end)}</div>`);
+  } else {
+    parts.push('<span class="sisa-warn">—</span><div class="sisa-lbl">SPK N/A</div>');
+  }
+  /* Opening */
+  const do_=hDiff(targetOpening);
+  const clsO=alertCls(do_);
+  if(clsO){
+    var _op=parseDate(targetOpening).split('-');
+    const op=new Date(parseInt(_op[0]),parseInt(_op[1])-1,parseInt(_op[2]));
+    const isCrit=do_<=10&&do_>=0;
+    parts.push(`<span class="${clsO}"${isCrit?' style="font-size:11px;font-weight:800"':''}>${alertLabel(do_,'OPN')}</span><div class="sisa-lbl">Opening ${fmtDate(op)}</div>`);
+  }
+  return parts.join('<div style="margin-top:3px"></div>');
+}
+function fmtDate(d){
+  if(!d||isNaN(d.getTime())) return '—';
+  var dd=d.getDate(), mm=d.getMonth(), yy=String(d.getFullYear()).slice(2);
+  return (dd<10?'0':'')+dd+' '+BULAN[mm]+' '+yy;
+}
+
+/* ─── 6 DISIPLIN BARS ─── */
+function disBar(pct, label, isNA){
+  if(isNA){
+    return `<div class="dis-item">
+    <div class="dis-name">${label}</div>
+    <div class="dis-bar-bg"><div class="dis-bar-fill" style="width:0%;background:var(--t3)"></div></div>
+    <div class="dis-pct" style="color:var(--t3);font-style:italic;font-size:8px">N/A</div>
+  </div>`;
+  }
+  const v=Math.min(Math.max(parseF(pct),0),100);
+  const cls=v>=80?'g':v>=40?'y':'r';
+  const col=v>=80?'var(--green)':v>=40?'var(--yellow)':'var(--red)';
+  return `<div class="dis-item">
+    <div class="dis-name">${label}</div>
+    <div class="dis-bar-bg"><div class="dis-bar-fill ${cls}" style="width:${v}%"></div></div>
+    <div class="dis-pct" style="color:${col}">${v}%</div>
+  </div>`;
+}
+function disiplinRow(d, colspan){
+  /* ── helpers ── */
+  /* fmtD — pakai fungsi global */
+  function metaVal(v, extraCls=''){
+    const disp = fmtD(v)||v;
+    if(!disp || disp==='—' || disp==='') return `<span class="exp-meta-val na">—</span>`;
+    return `<span class="exp-meta-val${extraCls?' '+extraCls:''}">${disp}</span>`;
+  }
+  /* Eskalasi badge */
+  const eskYa = (d.eskalasi||'').toLowerCase()==='ya'||(d.eskalasi||'').toLowerCase()==='yes';
+  const eskVal = eskYa
+    ? `<span class="exp-meta-val esc-ya">⚠ YA</span>`
+    : `<span class="exp-meta-val esc-tdk">✓ Tidak</span>`;
+  const eskKet = (d.eskalasiKet||'').trim();
+  const eskKetHtml = eskKet
+    ? `<div class="exp-meta-ket">📌 ${eskKet}</div>` : '';
+
+  /* Tipe project yang tidak punya HVAC */
+  const NO_HVAC_TIPES=['Touch Up','Touch Up + Hotdak','Bongkaran Bare'];
+  const hvacNA = NO_HVAC_TIPES.includes(d.tipeProject) || (NO_HVAC_TIPES.length>0 && d.hvac===0 && NO_HVAC_TIPES.includes(d.tipeProject));
+  const tipeTag = d.tipeProject ? `<span style="font-size:8px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(20,184,166,0.15);color:var(--teal);margin-left:6px">${d.tipeProject}</span>` : '';
+
+  return `<tr class="expand-row" id="exp-row-${d.namaProject.replace(/\s/g,'_')}">
+    <td colspan="${colspan}">
+      <div class="expand-inner">
+        <div class="dis-title">📐 6 Disiplin Pekerjaan — ${d.namaProject}${tipeTag}</div>
+        <div class="dis-grid">
+          ${disBar(d.persiapan,'🔧 Persiapan')}
+          ${disBar(d.sipil,'🏗 Sipil & Arsitektur')}
+          ${disBar(d.me,'⚡ ME (Elektrikal & Fire)')}
+          ${disBar(d.plumbing,'🚿 Plumbing & Gas')}
+          ${disBar(d.hvac,'❄ HVAC', NO_HVAC_TIPES.includes(d.tipeProject))}
+          ${disBar(d.fixture,'🪑 Furniture & Fixture')}
+        </div>
+
+        <!-- ── Detail Info: Timeline & Action ── -->
+        <div class="exp-meta-grid">
+
+          <!-- Kolom 1: Timeline -->
+          <div class="exp-meta-box">
+            <div class="exp-meta-title">📅 Timeline Data</div>
+            <div class="exp-meta-rows">
+              <div class="exp-meta-row">
+                <span class="exp-meta-key">SPK Mulai</span>
+                ${metaVal(d.spkStart)}
+              </div>
+              <div class="exp-meta-row">
+                <span class="exp-meta-key">SPK Selesai</span>
+                ${metaVal(d.spkEnd)}
+              </div>
+              <div class="exp-meta-row">
+                <span class="exp-meta-key">Target Opening</span>
+                ${metaVal(d.targetOpening)}
+              </div>
+              <div class="exp-meta-row">
+                <span class="exp-meta-key">Aktual Opening</span>
+                ${metaVal(d.aktualOpening)}
+              </div>
+              <div class="exp-meta-row">
+                <span class="exp-meta-key">ETA MBO</span>
+                ${metaVal(d.etaMBO)}
+              </div>
+            </div>
+          </div>
+
+          <!-- Kolom 2: Action & Status -->
+          <div class="exp-meta-box">
+            <div class="exp-meta-title">📝 Action &amp; Status</div>
+            <div class="exp-meta-rows">
+              <div class="exp-meta-row">
+                <span class="exp-meta-key">Tipe Project</span>
+                ${d.tipeProject ? `<span class="exp-meta-val" style="color:var(--teal)">${d.tipeProject}</span>` : '<span class="exp-meta-val na">—</span>'}
+              </div>
+              <div class="exp-meta-row">
+                <span class="exp-meta-key">Rencana Kerja</span>
+                ${metaVal(d.rencana)}
+              </div>
+              <div class="exp-meta-row">
+                <span class="exp-meta-key">Carry Over</span>
+                ${metaVal(d.carryOver)}
+              </div>
+              <div class="exp-meta-row">
+                <span class="exp-meta-key">Eskalasi</span>
+                ${eskVal}
+              </div>
+            </div>
+            ${eskKetHtml}
+          </div>
+
+        </div>
+      </div>
+    </td>
+  </tr>`;
+}
+
+/* ─── TABLE ─── */
+function rTable(){
+  const tb=g('tbody');
+  g('tcount').textContent=fil.length+' proyek';
+  if(!fil.length){
+    tb.innerHTML='<tr><td colspan="10" class="empty">Tidak ada data untuk filter ini</td></tr>';
+    return;
+  }
+  let html='';
+  fil.forEach((d,i)=>{
+    const clr=pclr(d.aktual,d.target);
+    const dev=parseF(d.deviasi!=null?d.deviasi:d.aktual-d.target);
+    const ds=dev>0?'+':''; const dc=dev>0?'dp':dev<0?'dn':'dz';
+    const isExp=(expandedIdx===i);
+    const ktrShort=(d.kontraktor||'—').length>18?(d.kontraktor||'—').substring(0,16)+'…':(d.kontraktor||'—');
+    html+=`<tr data-idx="${i}" class="trow${isExp?' expanded':''}">
+      <td>
+        <span class="pn">${d.namaProject}<span class="btag ${BCLS[d.brand]||'bt-c'}">${d.brand}</span></span>
+        <div style="display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap">
+          ${d.tipeProject?`<span style="font-size:7px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(20,184,166,0.12);color:var(--teal);border:1px solid rgba(20,184,166,0.25)">${d.tipeProject}</span>`:''}
+          <span class="expand-hint">${isExp?'▲ Sembunyikan':'▼ Lihat 6 disiplin'}</span>
+        </div>
+      </td>
+      <td>
+        <span class="prsm">${d.namaPM}</span>
+        <div class="prktr">SM: ${d.sm}</div>
+      </td>
+      <td><span class="prsm" style="font-size:9px">${ktrShort}</span></td>
+      <td><span class="wkcell">W${d.mingguKe}</span></td>
+      <td>
+        <div class="prwrap">
+          <div class="prbg"><div class="prfill" style="width:${Math.min(d.aktual,100)}%;background:${clr}"></div></div>
+          <span class="prpct" style="color:${clr}">${d.aktual}%</span>
+        </div>
+      </td>
+      <td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t2)">${d.target}%</td>
+      <td class="dc"><span class="${dc}">${ds}${dev.toFixed(1)}%</span></td>
+      <td>${sisaHari(d.spkEnd, d.targetOpening)}</td>
+      <td>${sbg(d.status)}</td>
+      <td style="color:var(--t3);font-size:11px;text-align:center">${isExp?'▲':'▼'}</td>
+    </tr>`;
+    if(isExp) html+=disiplinRow(d,10);
+  });
+  tb.innerHTML=html;
+}
+
+function toggleRow(i){
+  expandedIdx=(expandedIdx===i)?null:i;
+  rTable();
+}
+
+/* ─── ISSUES ─── */
+function rIssues(){
+  const c=g('ilist');
+  const grouped={};
+  fil.forEach(d=>{
+    if((d.issues||[]).length>0){
+      const key=d.namaProject||d.lokasi;
+      grouped[key]={sm:d.sm, brand:d.brand, issues:d.issues, status:d.status};
+    }
+  });
+  const totalIssues=fil.reduce((s,d)=>s+(d.issues||[]).length,0);
+  g('icnt').textContent=totalIssues+' issues';
+  const projWithIssues=Object.keys(grouped);
+  if(!projWithIssues.length){c.innerHTML='<div class="empty">🎉 Tidak ada open issues</div>';return;}
+  c.innerHTML=projWithIssues.map(proj=>{
+    const d=grouped[proj];
+    return `<div class="ipg">
+      <div class="ipg-hd"><span class="ipg-proj">📍 ${proj}</span><span class="ipg-cnt">${d.issues.length} issue</span></div>
+      <div class="ipg-sm">SM: ${d.sm} · ${sbg(d.status)}</div>
+      <div>${d.issues.map(iss=>`<div class="ipg-item"><div class="ipg-dot"></div>${iss}</div>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ─── DONUT ─── */
+function rDonut(){
+  const t=fil.length,on=fil.filter(d=>d.status==='On Track').length;
+  const mn=fil.filter(d=>d.status==='Minor Delay').length,cr=fil.filter(d=>d.status==='Critical Delay').length;
+  const ea=fil.filter(d=>d.status==='Early Stage').length;
+  const circ=2*Math.PI*28;
+  const op=t?on/t:0,mp=t?mn/t:0,cp=t?cr/t:0;
+  let off=0;
+  arc('dOn',op,circ,off); off+=op*circ;
+  arc('dMn',mp,circ,off); off+=mp*circ;
+  arc('dCr',cp,circ,off);
+  g('dpct').textContent=t?Math.round(op*100)+'%':'—%';
+  g('dlo').textContent=on; g('dlm').textContent=mn; g('dlc').textContent=cr; g('dle').textContent=ea;
+}
+function arc(id,p,c,off){
+  const el=g(id);
+  el.setAttribute('stroke-dasharray',`${p*c} ${c-p*c}`);
+  el.setAttribute('stroke-dashoffset',-off);
+}
+
+/* ─── DEVIATION CHART ─── */
+function rDev(){
+  const c=g('devbars');
+  if(!fil.length){c.innerHTML='<div class="empty">Tidak ada data</div>';return;}
+  const sorted=[...fil].sort((a,b)=>(a.aktual-a.target)-(b.aktual-b.target));
+  c.innerHTML=sorted.map(d=>{
+    const dev=parseF(d.deviasi||(d.aktual-d.target)); const isP=dev>=0;
+    const clr=dev>=0?'var(--green)':dev>=-5?'var(--yellow)':'var(--red)';
+    const bw=Math.min(Math.abs(dev)*3.5,48); const sign=dev>=0?'+':'';
+    const lbl=(d.namaProject||'').substring(0,22);
+    return `<div class="devrow"><div class="devlbl" title="${d.namaProject||''}">${lbl}</div>
+      <div class="devcont"><div class="devctr"></div>
+      <div class="devbar ${isP?'dpos':'dneg'}" style="width:${bw}%;background:${clr}"></div></div>
+      <div class="devval" style="color:${clr}">${sign}${dev}%</div></div>`;
+  }).join('');
+}
+
+/* ─── RIGHT SIDEBAR ─── */
+function rSR(){
+  const t=fil.length; const avg=t?Math.round(fil.reduce((s,d)=>s+d.aktual,0)/t):0;
+  const is=fil.reduce((s,d)=>s+(d.issues||[]).length,0);
+  const br=[...new Set(fil.map(d=>d.brand))].length;
+  g('sbT').textContent=t; g('sbA').textContent=avg+'%'; g('sbI').textContent=is; g('sbB').textContent=br;
+  const c=g('pcards');
+  if(!t){c.innerHTML='<div class="empty">Tidak ada data</div>';return;}
+  c.innerHTML=[...fil].sort((a,b)=>b.aktual-a.aktual).map(d=>{
+    const clr=pclr(d.aktual,d.target);
+    return `<div class="pcard"><div class="pcn">${d.namaProject}</div><div class="pcb">${d.brand} · W${d.mingguKe} · ${d.namaPM}${d.tipeProject?' · '+d.tipeProject:''}</div>
+      <div class="pcrow"><div class="pcbg"><div class="pcfill" style="width:${d.aktual}%;background:${clr}"></div></div>
+      <div class="pcpct" style="color:${clr}">${d.aktual}%</div></div>
+      <div class="pcmeta"><span class="pcsm">${d.sm}</span>${sbg(d.status)}</div></div>`;
+  }).join('');
+}
+
+/* ─── ALERT BAR ─── */
+function rDeadlineAlert(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  function diff(s){ if(!s) return null; const d=new Date(s); d.setHours(0,0,0,0); return isNaN(d)?null:Math.round((d-today)/86400000); }
+  const alerts=[];
+  fil.forEach(d=>{
+    const ds=diff(d.spkEnd);
+    const do_=diff(d.targetOpening);
+    /* Hanya tampilkan jika ada yang H-7 ke bawah */
+    const spkCrit  = ds!==null  && ds<=7;
+    const opnCrit  = do_!==null && do_<=7;
+    if(!spkCrit && !opnCrit) return;
+    /* Warna border: ambil yang paling kritis */
+    const minD = [ds,do_].filter(x=>x!==null&&x<=7).reduce((a,b)=>a<b?a:b, 999);
+    const borderCol = minD<=3 ? 'var(--red)' : 'var(--yellow)';
+    /* Label per tanggal */
+    const spkLbl  = spkCrit  ? (ds>=0?`SPK H-${ds}`:`SPK +${Math.abs(ds)}h`) : '';
+    const opnLbl  = opnCrit  ? (do_>=0?`OPN H-${do_}`:`OPN +${Math.abs(do_)}h`) : '';
+    const tags = [spkLbl,opnLbl].filter(Boolean).map(lbl=>{
+      const isRed=lbl.includes('+')||parseInt(lbl.match(/\d+/)?.[0])<=3;
+      return `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:800;background:${isRed?'rgba(239,68,68,0.18)':'rgba(251,191,36,0.15)'};color:${isRed?'var(--red)':'var(--yellow)'};margin-right:4px">${lbl}</span>`;
+    }).join('');
+    alerts.push(`<div style="padding:6px 8px;border-radius:6px;margin-bottom:5px;background:var(--bg3);border-left:3px solid ${borderCol}">
+      <div style="font-size:10px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:3px">${d.namaProject.split(' ').slice(0,4).join(' ')}</div>
+      <div>${tags}</div>
+    </div>`);
+  });
+  const wrap=g('deadlineAlert');
+  const list=g('deadlineList');
+  if(alerts.length){
+    list.innerHTML=alerts.join('');
+    wrap.style.display='block';
+  } else {
+    wrap.style.display='none';
+  }
+}
+
+function rAlert(){
+  const cr=fil.filter(d=>d.status==='Critical Delay');
+  const ab=g('abn');
+  if(cr.length){
+    ab.style.display='flex'; ab.className='abn';
+    ab.innerHTML=`⚠ <strong>Critical Delay</strong>: ${cr.map(d=>'<b>'+d.namaProject+'</b>').join(' · ')} — segera eskalasi!`;
+  } else ab.style.display='none';
+}
+
+/* ─── PDF EXPORT ─── */
+function exportPDF(){
+  const style=document.createElement('style');
+  style.id='print-style';
+  style.textContent=`
+    @media print {
+      body{background:#fff!important;color:#000!important;overflow:auto!important;height:auto!important;}
+      .hdr,.sl,.sr,.demo-fab{display:none!important;}
+      .layout{display:block!important;height:auto!important;overflow:visible!important;}
+      .mc{overflow:visible!important;padding:0!important;}
+      .card,.summary-section{break-inside:avoid;border:1px solid #ccc!important;background:#fff!important;}
+      .cht,.chd{color:#000!important;}
+      tbody td,thead th{color:#333!important;}
+    }`;
+  document.head.appendChild(style);
+  window.print();
+  setTimeout(()=>{ const s=document.getElementById('print-style'); if(s)s.remove(); },1000);
+}
+
+/* ─── SUMMARY ─── */
+function rSummary(){
+  const t=fil.length;
+  if(!t){g('summaryBody').innerHTML='<div class="empty">Tidak ada data</div>';return;}
+  const on=fil.filter(d=>d.status==='On Track').length;
+  const mn=fil.filter(d=>d.status==='Minor Delay').length;
+  const cr=fil.filter(d=>d.status==='Critical Delay').length;
+  const ea=fil.filter(d=>d.status==='Early Stage').length;
+  const is=fil.reduce((s,d)=>s+(d.issues||[]).length,0);
+  const avg=Math.round(fil.reduce((s,d)=>s+d.aktual,0)/t);
+  const brands=[...new Set(fil.map(d=>d.brand))];
+  const pms=[...new Set(fil.map(d=>d.namaPM))];
+  const crProjs=fil.filter(d=>d.status==='Critical Delay');
+  const mnProjs=fil.filter(d=>d.status==='Minor Delay');
+  const onPct=Math.round(on/t*100);
+
+  g('sumDate').textContent=fmtT(new Date());
+  g('summaryBody').innerHTML=`
+  <div class="sum-grid">
+    <div class="sum-stat"><div class="sum-stat-val" style="color:var(--blue)">${t}</div><div class="sum-stat-lbl">Total Project</div></div>
+    <div class="sum-stat"><div class="sum-stat-val" style="color:var(--green)">${onPct}%</div><div class="sum-stat-lbl">On Track</div></div>
+    <div class="sum-stat"><div class="sum-stat-val" style="color:var(--red)">${cr}</div><div class="sum-stat-lbl">Critical Delay</div></div>
+    <div class="sum-stat"><div class="sum-stat-val" style="color:var(--orange)">${is}</div><div class="sum-stat-lbl">Open Issues</div></div>
+  </div>
+  <p class="sum-para">
+    Per <b>${fmtT(new Date())}</b>, terdapat total <b>${t} project aktif</b> di <b>${brands.length} brand FnB</b>
+    (${brands.join(', ')}), dikelola oleh PM: <b>${pms.map(p=>p+' ('+fil.filter(d=>d.namaPM===p).length+' project)').join(', ')}</b>.
+    Rata-rata progress: <b>${avg}%</b>.
+    <b class="green">${on} project (${onPct}%)</b> On Track,
+    <b class="yellow">${mn} project</b> Minor Delay,
+    <b class="red">${cr} project</b> Critical Delay.
+    ${ea>0?`<b>${ea} project</b> masih Early Stage.`:''}
+  </p>
+  ${cr>0?`<div class="sum-block">
+    <div class="sum-block-title">🔴 Critical Delay — Perlu Eskalasi</div>
+    <div class="sum-list">${crProjs.map(d=>`
+      <div class="sum-li"><span><b>${d.namaProject}</b> — Aktual ${d.aktual}% vs target ${d.target}% (dev ${d.aktual-d.target}%). PM: ${d.namaPM} · SM: ${d.sm} · ${d.kontraktor}.${(d.issues||[]).length?` Issues: ${d.issues.join('; ')}.`:''}</span></div>
+    `).join('')}</div>
+  </div>`:''}
+  ${mn>0?`<div class="sum-block" style="border-left-color:var(--yellow)">
+    <div class="sum-block-title" style="color:var(--yellow)">⚠ Minor Delay — Perlu Monitoring</div>
+    <div class="sum-list">${mnProjs.map(d=>`
+      <div class="sum-li"><span><b>${d.namaProject}</b> — Aktual ${d.aktual}% vs target ${d.target}%. PM: ${d.namaPM} · SM: ${d.sm}.${(d.issues||[]).length?` Issues: ${d.issues.join('; ')}.`:''}</span></div>
+    `).join('')}</div>
+  </div>`:''}
+  <p class="sum-para">Total open issues yang perlu ditindaklanjuti: <b class="red">${is} item</b> dari ${fil.filter(d=>(d.issues||[]).length>0).length} project.</p>`;
+}
+
+/* ─── HELPERS ─── */
+function g(id){return document.getElementById(id);}
+function fmtT(d){return d.toLocaleString('id-ID',{dateStyle:'short',timeStyle:'short'});}
+function pclr(p,t){const d=p-t;return d>=-5?'var(--green)':d>=-10?'var(--yellow)':'var(--red)';}
+function sbg(s){const m={'On Track':['s-on','✅'],'Minor Delay':['s-mn','⚠'],'Critical Delay':['s-cr','🔴'],'Early Stage':['s-ea','🔵']};const[c,i]=m[s]||['s-ea','—'];return `<span class="sb ${c}">${i} ${s}</span>`;}
+function hideLoad(){const l=g('loading');l.style.opacity='0';setTimeout(()=>l.style.display='none',400);}
+function showSettings(){g('gurl').value=GAS;g('modal').style.display='flex';}
+function closeM(){g('modal').style.display='none';}
+function saveGAS(){const u=g('gurl').value.trim();if(!u)return alert('Masukkan URL GAS');GAS=u;localStorage.setItem('pm26',u);closeM();fetchGAS();}
+function useDemo(){raw=demoData().map(normalizeRow);GAS='';g('lup').textContent='Demo Mode';closeM();applyF();hideLoad();}
+
+function toggleTheme(){
+  const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+  const next=isDark?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('pm26theme',next);
+  const btn=g('themeBtn');
+  btn.textContent=next==='light'?'🌙 Dark':'☀️ Light';
+}
+function initTheme(){
+  const saved=localStorage.getItem('pm26theme')||'dark';
+  document.documentElement.setAttribute('data-theme',saved);
+  const btn=g('themeBtn');
+  if(btn) btn.textContent=saved==='light'?'🌙 Dark':'☀️ Light';
+}
+</script>
+</body>
+</html>
