@@ -203,8 +203,12 @@ html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:
 .tbl-wrap{overflow-x:visible;width:100%;}
 table{width:100%;border-collapse:collapse;table-layout:fixed;}
 thead th{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);
-  padding:7px 8px;text-align:left;background:rgba(255,255,255,.02);border-bottom:1px solid var(--border);
-  white-space:nowrap;overflow:hidden;}
+  padding:7px 8px;text-align:left;background:var(--bg2);border-bottom:1px solid var(--border);
+  white-space:nowrap;overflow:hidden;
+  position:sticky;top:82px;z-index:10;}
+[data-theme="light"] thead th{background:var(--bg2);}
+input#globalSearch::placeholder{color:var(--t3);font-weight:400;}
+input#globalSearch{font-family:'Plus Jakarta Sans',sans-serif;}
 tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .12s;}
 tbody tr.trow{cursor:pointer;-webkit-tap-highlight-color:rgba(245,124,40,.2);}
 tbody tr.trow:active{background:rgba(245,124,40,.08);}
@@ -613,6 +617,15 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
         <option value="ALL">Semua Tipe</option>
       </select>
     </div>
+
+    <!-- Global Search -->
+    <div class="fgrp" style="flex:1;min-width:0;max-width:220px;">
+      <span class="fsel-label">🔍 Cari</span>
+      <input type="text" id="globalSearch" class="fsel"
+        placeholder="Nama project / lokasi…"
+        oninput="fSearch=this.value.trim();applyF()"
+        style="width:100%;max-width:100%">
+    </div>
   </div>
 </div>
 
@@ -781,7 +794,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
 
 <script>
 let GAS='', raw=[], fil=[];
-let fBrand='ALL', fWeek='ALL', fSM='ALL', fPM='ALL', fKtr='ALL', fTipe='ALL';
+let fBrand='ALL', fWeek='ALL', fSM='ALL', fPM='ALL', fKtr='ALL', fTipe='ALL', fSearch='';
 let expandedIdx=null;
 
 const BCLS={'Chatime':'bt-c','Gindaco':'bt-g','Go Go Curry':'bt-gg','88Seoul':'bt-s','Molly Tea':'bt-m'};
@@ -977,7 +990,6 @@ function normalizeRow(d){
     issues:       d.issues || (function(){
                     var raw = d['Issue & Kendala'] || d.kendala || '';
                     if(!raw) return [];
-                    // Split by [Kategori] pattern → tiap issue jadi item terpisah
                     var parts = raw.split(/(?=\[)/);
                     return parts.map(function(s){ return s.trim(); }).filter(Boolean);
                   }()),
@@ -985,6 +997,7 @@ function normalizeRow(d){
     week:         parseF(d['Minggu Ke'] ?? d.mingguKe ?? d.week) || 0,
     progress:     aktual,
     lokasi:       d.lokasi || '',
+    fileUrl:      (d['File URL'] || d.fileUrl || '').toString().trim(),
   };
 }
 function parseF(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
@@ -1074,7 +1087,9 @@ function applyF(){
     const p = fPM==='ALL'    || d.namaPM===fPM;
     const k = fKtr==='ALL'   || d.kontraktor===fKtr;
     const t = fTipe==='ALL'  || d.tipeProject===fTipe;
-    return b&&w&&s&&p&&k&&t;
+    const q = !fSearch       || (d.namaProject||'').toLowerCase().includes(fSearch.toLowerCase())
+                             || (d.lokasi||'').toLowerCase().includes(fSearch.toLowerCase());
+    return b&&w&&s&&p&&k&&t&&q;
   });
   expandedIdx=null;
   buildDropdowns();
@@ -1203,11 +1218,17 @@ function disiplinRow(d, colspan){
   const NO_HVAC_TIPES=['Touch Up','Touch Up + Hotdak','Bongkaran Bare'];
   const hvacNA = NO_HVAC_TIPES.includes(d.tipeProject) || (NO_HVAC_TIPES.length>0 && d.hvac===0 && NO_HVAC_TIPES.includes(d.tipeProject));
   const tipeTag = d.tipeProject ? `<span style="font-size:8px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(20,184,166,0.15);color:var(--teal);margin-left:6px">${d.tipeProject}</span>` : '';
+  const reportBtn = (d.fileUrl && d.fileUrl.startsWith('http'))
+    ? `<a href="${d.fileUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;font-size:10px;font-weight:700;text-decoration:none;margin-left:auto;flex-shrink:0;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">📄 Buka Laporan (PPTX)</a>`
+    : '';
 
   return `<tr class="expand-row" id="exp-row-${d.namaProject.replace(/\s/g,'_')}">
     <td colspan="${colspan}">
       <div class="expand-inner">
-        <div class="dis-title">📐 6 Disiplin Pekerjaan — ${d.namaProject}${tipeTag}</div>
+        <div class="dis-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
+          <span>📐 6 Disiplin Pekerjaan — ${d.namaProject}${tipeTag}</span>
+          ${reportBtn}
+        </div>
         <div class="dis-grid">
           ${disBar(d.persiapan,'🔧 Persiapan')}
           ${disBar(d.sipil,'🏗 Sipil & Arsitektur')}
@@ -1292,9 +1313,11 @@ function rTable(){
     const ds=dev>0?'+':''; const dc=dev>0?'dp':dev<0?'dn':'dz';
     const isExp=(expandedIdx===i);
     const ktrShort=(d.kontraktor||'—').length>18?(d.kontraktor||'—').substring(0,16)+'…':(d.kontraktor||'—');
+    const hasFile = d.fileUrl && d.fileUrl.startsWith('http');
+    const fileIcon = hasFile ? `<a href="${d.fileUrl}" target="_blank" title="Buka Laporan PPTX" style="text-decoration:none;margin-left:4px;font-size:11px;vertical-align:middle" onclick="event.stopPropagation()">📄</a>` : '';
     html+=`<tr data-idx="${i}" class="trow${isExp?' expanded':''}">
       <td>
-        <span class="pn">${d.namaProject}<span class="btag ${BCLS[d.brand]||'bt-c'}">${d.brand}</span></span>
+        <span class="pn">${d.namaProject}${fileIcon}<span class="btag ${BCLS[d.brand]||'bt-c'}">${d.brand}</span></span>
         <div style="display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap">
           ${d.tipeProject?`<span style="font-size:7px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(20,184,166,0.12);color:var(--teal);border:1px solid rgba(20,184,166,0.25)">${d.tipeProject}</span>`:''}
           <span class="expand-hint">${isExp?'▲ Sembunyikan':'▼ Lihat 6 disiplin'}</span>
