@@ -124,6 +124,8 @@ html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:
   font-family:'JetBrains Mono',monospace;white-space:nowrap;}
 .ldot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+@keyframes blink-red{0%,100%{opacity:1;color:var(--red);}50%{opacity:.5;color:#ff8888;}}
+.deadline-blink{animation:blink-red 1s infinite;font-weight:800;}
 .btn{padding:4px 10px;border-radius:var(--rs);font-size:9.5px;font-weight:600;cursor:pointer;
   transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;gap:4px;white-space:nowrap;}
 .btn-o{background:var(--orange);color:#fff;border:none;}
@@ -162,7 +164,7 @@ html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:
 /* CENTER — full width */
 .mc{flex:1;min-width:0;padding:14px 12px;display:flex;flex-direction:column;gap:12px;overflow:visible;}
 
-.abn{background:linear-gradient(90deg,var(--red-d),transparent);border:1px solid rgba(239,68,68,.2);
+.abn{background:linear-gradient(90deg,var(--red-d),transparent);border:1px solid rgba(239,68,68,.2);word-break:break-word;flex-wrap:wrap;
   border-radius:var(--rs);padding:7px 12px;font-size:10.5px;color:var(--red);
   display:flex;align-items:center;gap:7px;animation:si .3s ease;}
 @keyframes si{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
@@ -317,7 +319,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
 
 /* DONUT */
 .donut-sect{border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:18px;padding:13px 14px;}
-.dwrap{position:relative;width:80px;height:80px;flex-shrink:0;}
+.dwrap{position:relative;width:100px;height:100px;flex-shrink:0;}
 .dsvg{transform:rotate(-90deg);}
 .dcenter{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .dpct{font-size:17px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;}
@@ -706,13 +708,14 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
     <div class="row2">
       <div class="card">
         <div class="chd"><div class="cht">🚨 Open Issues</div><div class="cbadge" id="icnt">—</div></div>
+        <div id="issues-proj-sel" style="padding:6px 10px 0"></div>
         <div id="ilist"><div class="empty">Memuat…</div></div>
       </div>
-      <div class="card">
+      <div class="card" style="flex:1.3;min-height:180px">
         <div class="chd"><div class="cht">🟢 Health Status</div></div>
-        <div class="donut-sect">
+        <div class="donut-sect" style="flex:1;align-items:center">
           <div class="dwrap">
-            <svg class="dsvg" width="80" height="80" viewBox="0 0 80 80">
+            <svg class="dsvg" width="100" height="100" viewBox="0 0 80 80">
               <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="9"/>
               <circle id="dOn" cx="40" cy="40" r="28" fill="none" stroke="#22c55e" stroke-width="9" stroke-dasharray="0 176" stroke-linecap="round" style="transition:stroke-dasharray 1s ease"/>
               <circle id="dMn" cx="40" cy="40" r="28" fill="none" stroke="#f59e0b" stroke-width="9" stroke-dasharray="0 176" stroke-linecap="round" style="transition:stroke-dasharray 1s ease"/>
@@ -1123,6 +1126,7 @@ function alertCls(d){
   if(d===null) return null;
   if(d>20)  return 'sisa-ok';
   if(d>10)  return 'sisa-warn';
+  if(d<=1)  return 'sisa-over deadline-blink';
   return 'sisa-over';
 }
 function alertLabel(d, prefix){
@@ -1325,6 +1329,15 @@ function toggleRow(i){
 }
 
 /* ─── ISSUES ─── */
+function toggleIssueDetail(projKey){
+  const detail=document.getElementById('iss-detail-'+projKey.replace(/\s/g,'_'));
+  const arrow=document.getElementById('iss-arrow-'+projKey.replace(/\s/g,'_'));
+  if(!detail) return;
+  const isOpen=detail.style.display!=='none';
+  detail.style.display=isOpen?'none':'block';
+  if(arrow) arrow.textContent=isOpen?'▶':'▼';
+}
+
 function rIssues(){
   const c=g('ilist');
   const grouped={};
@@ -1336,23 +1349,37 @@ function rIssues(){
   });
   const totalIssues=fil.reduce((s,d)=>s+(d.issues||[]).length,0);
   g('icnt').textContent=totalIssues+' issues';
+  g('issues-proj-sel').innerHTML='';
   const projWithIssues=Object.keys(grouped);
   if(!projWithIssues.length){c.innerHTML='<div class="empty">🎉 Tidak ada open issues</div>';return;}
-  c.innerHTML=projWithIssues.map(proj=>{
+
+  const clrMap={'Sipil':'#3b82f6','MEP':'#8b5cf6','ME':'#8b5cf6','Internal':'#6b7280',
+    'Vendor':'#f59e0b','Approval':'#ef4444','Mall/Landlord':'#ec4899',
+    'Material':'#14b8a6','Plumbing':'#0ea5e9','HVAC':'#10b981'};
+
+  c.innerHTML=projWithIssues.map((proj,idx)=>{
     const d=grouped[proj];
+    const pid=proj.replace(/\s/g,'_');
     const issueHTML=d.issues.map(iss=>{
       const m=iss.match(/^\[([^\]]+)\]\s*(.*)/s);
       if(m){
-        const kat=m[1], txt=m[2]||'';
-        const clrMap={'Sipil':'#3b82f6','MEP':'#8b5cf6','ME':'#8b5cf6','Internal':'#6b7280',
-                   'Vendor':'#f59e0b','Approval':'#ef4444','Mall/Landlord':'#ec4899',
-                   'Material':'#14b8a6','Plumbing':'#0ea5e9','HVAC':'#10b981'};
+        const kat=m[1],txt=m[2]||'';
         const clr=clrMap[kat]||'#94a3b8';
         return '<div class="ipg-item"><span class="ipg-kat" style="background:'+clr+'20;color:'+clr+';border:1px solid '+clr+'40">'+kat+'</span><span class="ipg-txt">'+txt+'</span></div>';
       }
       return '<div class="ipg-item"><div class="ipg-dot"></div><span class="ipg-txt">'+iss+'</span></div>';
     }).join('');
-    return '<div class="ipg"><div class="ipg-hd"><span class="ipg-proj">📍 '+proj+'</span><span class="ipg-cnt">'+d.issues.length+' issue</span></div><div class="ipg-sm">SM: '+d.sm+' · '+sbg(d.status)+'</div><div class="ipg-issues">'+issueHTML+'</div></div>';
+    return `<div class="ipg">
+      <div class="ipg-hd" onclick="toggleIssueDetail('${proj}')" style="cursor:pointer;user-select:none">
+        <span class="ipg-proj">📍 ${proj}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="ipg-cnt">${d.issues.length} issue</span>
+          <span id="iss-arrow-${pid}" style="font-size:9px;color:var(--t3)">▶</span>
+        </div>
+      </div>
+      <div class="ipg-sm">SM: ${d.sm} · ${sbg(d.status)}</div>
+      <div id="iss-detail-${pid}" style="display:none" class="ipg-issues">${issueHTML}</div>
+    </div>`;
   }).join('');
 }
 
@@ -1425,12 +1452,14 @@ function rDeadlineAlert(){
     /* Warna border: ambil yang paling kritis */
     const minD = [ds,do_].filter(x=>x!==null&&x<=7).reduce((a,b)=>a<b?a:b, 999);
     const borderCol = minD<=3 ? 'var(--red)' : 'var(--yellow)';
+    const blinkCls  = minD<=1 ? 'deadline-blink' : '';
     /* Label per tanggal */
     const spkLbl  = spkCrit  ? (ds>=0?`SPK H-${ds}`:`SPK +${Math.abs(ds)}h`) : '';
     const opnLbl  = opnCrit  ? (do_>=0?`OPN H-${do_}`:`OPN +${Math.abs(do_)}h`) : '';
     const tags = [spkLbl,opnLbl].filter(Boolean).map(lbl=>{
       const isRed=lbl.includes('+')||parseInt(lbl.match(/\d+/)?.[0])<=3;
-      return `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:800;background:${isRed?'rgba(239,68,68,0.18)':'rgba(251,191,36,0.15)'};color:${isRed?'var(--red)':'var(--yellow)'};margin-right:4px">${lbl}</span>`;
+      const isBlink=lbl.includes('H-0')||lbl.includes('H-1')||lbl.includes('+');
+      return `<span class="${isBlink?'deadline-blink':''}" style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:800;background:${isRed?'rgba(239,68,68,0.18)':'rgba(251,191,36,0.15)'};color:${isRed?'var(--red)':'var(--yellow)'};margin-right:4px">${lbl}</span>`;
     }).join('');
     alerts.push(`<div style="padding:6px 8px;border-radius:6px;margin-bottom:5px;background:var(--bg3);border-left:3px solid ${borderCol}">
       <div style="font-size:10px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:3px">${d.namaProject.split(' ').slice(0,4).join(' ')}</div>
@@ -1452,7 +1481,12 @@ function rAlert(){
   const ab=g('abn');
   if(cr.length){
     ab.style.display='flex'; ab.className='abn';
-    ab.innerHTML=`⚠ <strong>Critical Delay</strong>: ${cr.map(d=>'<b>'+d.namaProject+'</b>').join(' · ')} — segera eskalasi!`;
+    const names=cr.map(d=>{
+      const nm=d.namaProject||'';
+      const short=nm.length>25?nm.slice(0,25)+'…':nm;
+      return '<b>'+short+'</b>';
+    });
+    ab.innerHTML='⚠ <strong>Critical Delay</strong> ('+cr.length+'): '+names.join(', ')+' — segera eskalasi!';
   } else ab.style.display='none';
 }
 
@@ -1511,16 +1545,24 @@ function rSummary(){
   ${cr>0?`<div class="sum-block">
     <div class="sum-block-title">🔴 Critical Delay — Perlu Eskalasi</div>
     <div class="sum-list">${crProjs.map(d=>`
-      <div class="sum-li"><span><b>${d.namaProject}</b> — Aktual ${d.aktual}% vs target ${d.target}% (dev ${(d.aktual-d.target).toFixed(1)}%). PM: ${d.namaPM} · SM: ${d.sm} · ${d.kontraktor}.${(d.issues||[]).length?` Issues: ${d.issues.join('; ')}.`:''}</span></div>
+      <div class="sum-li">
+        <div style="font-weight:700;font-size:10px;margin-bottom:2px">${d.namaProject}</div>
+        <div style="font-size:9px;color:var(--t2)">Aktual <b>${d.aktual}%</b> vs Target <b>${d.target}%</b> · Deviasi <b style="color:var(--red)">${(d.aktual-d.target).toFixed(1)}%</b></div>
+        <div style="font-size:9px;color:var(--t3)">PM: ${d.namaPM} · SM: ${d.sm} · ${d.kontraktor}</div>
+      </div>
     `).join('')}</div>
   </div>`:''}
   ${mn>0?`<div class="sum-block" style="border-left-color:var(--yellow)">
     <div class="sum-block-title" style="color:var(--yellow)">⚠ Minor Delay — Perlu Monitoring</div>
     <div class="sum-list">${mnProjs.map(d=>`
-      <div class="sum-li"><span><b>${d.namaProject}</b> — Aktual ${d.aktual}% vs target ${d.target}%. PM: ${d.namaPM} · SM: ${d.sm}.${(d.issues||[]).length?` Issues: ${d.issues.join('; ')}.`:''}</span></div>
+      <div class="sum-li">
+        <div style="font-weight:700;font-size:10px;margin-bottom:2px">${d.namaProject}</div>
+        <div style="font-size:9px;color:var(--t2)">Aktual <b>${d.aktual}%</b> vs Target <b>${d.target}%</b></div>
+        <div style="font-size:9px;color:var(--t3)">PM: ${d.namaPM} · SM: ${d.sm}</div>
+      </div>
     `).join('')}</div>
   </div>`:''}
-  <p class="sum-para">Total open issues yang perlu ditindaklanjuti: <b class="red">${is} item</b> dari ${fil.filter(d=>(d.issues||[]).length>0).length} project.</p>`;
+  <p class="sum-para" style="margin-top:8px">Total open issues: <b class="red">${is} item</b> dari <b>${fil.filter(d=>(d.issues||[]).length>0).length} project</b>.</p>`;
 }
 
 /* ─── HELPERS ─── */
