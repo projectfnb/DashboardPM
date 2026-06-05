@@ -139,10 +139,10 @@ html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:
 /* LEFT SIDEBAR */
 .sl{width:190px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);
   padding:8px 8px;display:flex;flex-direction:column;gap:5px;
-  position:sticky;top:96px;height:calc(100vh - 96px);overflow-y:auto;}
+  position:sticky;top:var(--hdr-h,82px);height:calc(100vh - var(--hdr-h,82px));overflow-y:auto;}
 .stitle{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
   color:var(--t3);padding:0 2px;margin-bottom:1px;}
-.ac{border-radius:var(--rs);padding:6px 10px;border:1px solid var(--border);position:relative;overflow:hidden;}
+.ac{border-radius:var(--rs);padding:6px 10px;border:1px solid var(--border);position:relative;overflow:visible;}
 .ac::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
 .ac.cr::before{background:var(--red);}
 .ac.mn::before{background:var(--yellow);}
@@ -150,8 +150,8 @@ html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:
 .ac.ok::before{background:var(--green);}
 .ac-n{font-size:18px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;}
 .ac-l{font-size:9px;color:var(--t2);margin-top:2px;}
-.ac-s{font-size:8px;color:var(--t3);margin-top:2px;font-family:'JetBrains Mono',monospace;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ac-s{font-size:8.5px;color:var(--t3);margin-top:3px;font-family:'Plus Jakarta Sans',sans-serif;
+  white-space:normal !important;overflow:visible !important;text-overflow:clip !important;word-break:break-word;}
 
 /* SM sebagai dropdown di sidebar */
 .sm-dropdown-wrap{display:flex;flex-direction:column;gap:5px;}
@@ -164,9 +164,12 @@ html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:
 /* CENTER — full width */
 .mc{flex:1;min-width:0;padding:14px 12px;display:flex;flex-direction:column;gap:12px;overflow:visible;}
 
-.abn{background:linear-gradient(90deg,var(--red-d),transparent);border:1px solid rgba(239,68,68,.2);word-break:break-word;flex-wrap:wrap;
-  border-radius:var(--rs);padding:7px 12px;font-size:10.5px;color:var(--red);
-  display:flex;align-items:center;gap:7px;animation:si .3s ease;}
+.abn{background:linear-gradient(90deg,var(--red-d),transparent);border:1px solid rgba(239,68,68,.2);
+  border-radius:var(--rs);padding:5px 12px;font-size:10.5px;color:var(--red);
+  display:flex;align-items:center;gap:6px;animation:si .3s ease;overflow:hidden;white-space:nowrap;min-height:30px;}
+.abn-inner{display:inline-block;white-space:nowrap;animation:marqueeScroll 22s linear infinite;}
+.abn-inner:hover{animation-play-state:paused;}
+@keyframes marqueeScroll{0%{transform:translateX(20%);}100%{transform:translateX(-100%);}}
 @keyframes si{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
 
 .krow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
@@ -205,9 +208,8 @@ table{width:100%;border-collapse:collapse;table-layout:fixed;}
 thead th{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);
   padding:7px 8px;text-align:left;background:var(--bg2);border-bottom:1px solid var(--border);
   white-space:nowrap;overflow:hidden;
-  position:sticky;top:96px;z-index:10;}
+  position:relative;z-index:10;}
 [data-theme="light"] thead th{background:var(--bg2);}
-input#globalSearch::placeholder{color:var(--t3);font-weight:400;}
 input#globalSearch{font-family:'Plus Jakarta Sans',sans-serif;}
 tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .12s;}
 tbody tr.trow{cursor:pointer;-webkit-tap-highlight-color:rgba(245,124,40,.2);}
@@ -348,7 +350,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
 /* RIGHT SIDEBAR */
 .sr{width:220px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);
   padding:11px 9px;display:flex;flex-direction:column;gap:9px;align-self:flex-start;
-  position:sticky;top:96px;max-height:calc(100vh - 96px);overflow-y:auto;}
+  position:sticky;top:var(--hdr-h,82px);max-height:calc(100vh - var(--hdr-h,82px));overflow-y:auto;}
 .statbox{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;}
 .sbrow{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
 .sbrow+.sbrow{border-top:1px solid var(--border);}
@@ -464,6 +466,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
   /* Tabel bisa scroll horizontal */
   .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   table{min-width:800px;table-layout:auto;}
+  thead th{position:static !important;}
 
   /* Header filter wrap */
   .hdr-row1,.hdr-row2{flex-wrap:wrap;gap:5px;}
@@ -617,14 +620,9 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
         <option value="ALL">Semua Tipe</option>
       </select>
     </div>
-
-    <!-- Global Search -->
-    <div class="fgrp" style="flex:1;min-width:0;max-width:220px;">
+    <div class="fgrp" style="flex:1;min-width:100px;max-width:200px;">
       <span class="fsel-label">🔍 Cari</span>
-      <input type="text" id="globalSearch" class="fsel"
-        placeholder="Nama project / lokasi…"
-        oninput="fSearch=this.value.trim();applyF()"
-        style="width:100%;max-width:100%">
+      <input type="text" id="globalSearch" class="fsel" placeholder="Nama project…" oninput="fSearch=this.value.trim();applyF()" style="width:100%">
     </div>
   </div>
 </div>
@@ -689,15 +687,15 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
       <div class="tbl-wrap">
         <table>
           <colgroup>
-            <col style="width:22%">
-            <col style="width:13%">
+            <col style="width:18%">
             <col style="width:12%">
-            <col style="width:4%">
-            <col style="width:13%">
+            <col style="width:12%">
+            <col style="width:5%">
+            <col style="width:14%">
             <col style="width:7%">
             <col style="width:7%">
             <col style="width:9%">
-            <col style="width:9%">
+            <col style="width:12%">
             <col style="width:4%">
           </colgroup>
           <thead><tr>
@@ -794,6 +792,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
 
 <script>
 let GAS='', raw=[], fil=[];
+var DEFAULT_GAS='https://script.google.com/macros/s/AKfycbzP0ejKcJOBhVcXwLKRe2HnMWSf78i9iHt1CePYGzf-2p1UohF8iaKxPsYNNs3JNHZhRg/exec';
 let fBrand='ALL', fWeek='ALL', fSM='ALL', fPM='ALL', fKtr='ALL', fTipe='ALL', fSearch='';
 let expandedIdx=null;
 
@@ -878,7 +877,15 @@ function demoData(){return[
 /* ─── INIT ─── */
 window.addEventListener('DOMContentLoaded',()=>{
   initTheme();
-  GAS=localStorage.getItem('pm26')||'';
+  function setHdrHeight(){
+    var hdr=document.querySelector('.hdr');
+    if(!hdr) return;
+    document.documentElement.style.setProperty('--hdr-h', Math.ceil(hdr.getBoundingClientRect().height)+'px');
+  }
+  setHdrHeight(); window.addEventListener('resize',setHdrHeight);
+  setTimeout(setHdrHeight,400); setTimeout(setHdrHeight,1200);
+  GAS=localStorage.getItem('pm26')||DEFAULT_GAS;
+  if(!localStorage.getItem('pm26')) localStorage.setItem('pm26',GAS);
   setTimeout(()=>{ GAS?fetchGAS():(hideLoad(),showSettings()); },600);
 
   /* Row click delegation */
@@ -990,6 +997,7 @@ function normalizeRow(d){
     issues:       d.issues || (function(){
                     var raw = d['Issue & Kendala'] || d.kendala || '';
                     if(!raw) return [];
+                    // Split by [Kategori] pattern → tiap issue jadi item terpisah
                     var parts = raw.split(/(?=\[)/);
                     return parts.map(function(s){ return s.trim(); }).filter(Boolean);
                   }()),
@@ -997,7 +1005,7 @@ function normalizeRow(d){
     week:         parseF(d['Minggu Ke'] ?? d.mingguKe ?? d.week) || 0,
     progress:     aktual,
     lokasi:       d.lokasi || '',
-    fileUrl:      (d['File URL'] || d.fileUrl || '').toString().trim(),
+    fileUrl:      (d['File URL']||d.fileUrl||'').toString().trim(),
   };
 }
 function parseF(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
@@ -1078,24 +1086,55 @@ function filterSMDrop(v){
   applyF();
 }
 
-function applyF(){
-  const norm=s=>(s||'').toLowerCase().replace(/\s+/g,'');
-  fil=raw.filter(d=>{
-    const b = fBrand==='ALL' || norm(d.brand)===norm(fBrand);
-    const w = fWeek==='ALL'  || String(d.mingguKe)===String(fWeek);
-    const s = fSM==='ALL'    || d.sm===fSM;
-    const p = fPM==='ALL'    || d.namaPM===fPM;
-    const k = fKtr==='ALL'   || d.kontraktor===fKtr;
-    const t = fTipe==='ALL'  || d.tipeProject===fTipe;
-    const q = !fSearch       || (d.namaProject||'').toLowerCase().includes(fSearch.toLowerCase())
-                             || (d.lokasi||'').toLowerCase().includes(fSearch.toLowerCase());
-    return b&&w&&s&&p&&k&&t&&q;
+function applyF() {
+  const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  
+  // Tanggal hari ini sebagai pembanding (Pintu Gerbang Proyek Aktif)
+  const hariIni = new Date();
+  hariIni.setHours(0, 0, 0, 0);
+
+  // 1. Filter awal berdasarkan kriteria dropdown DAN Tanggal SPK
+  let filteredRaw = raw.filter(d => {
+    // Logika Saringan Tanggal: Jika SPK Mulai ada dan di masa depan, maka isAktif = false
+    const tglMulai = d.spkStart ? new Date(d.spkStart) : null;
+    const isAktif = !tglMulai || tglMulai <= hariIni;
+
+    const b = fBrand === 'ALL' || norm(d.brand) === norm(fBrand);
+    const w = fWeek === 'ALL'  || String(d.mingguKe) === String(fWeek);
+    const s = fSM === 'ALL'    || d.sm === fSM;
+    const p = fPM === 'ALL'    || d.namaPM === fPM;
+    const k = fKtr === 'ALL'   || d.kontraktor === fKtr;
+    const t = fTipe === 'ALL'  || d.tipeProject === fTipe;
+    const q = !fSearch || (d.namaProject || '').toLowerCase().includes(fSearch.toLowerCase());
+    
+    return isAktif && b && w && s && p && k && t && q;
   });
-  expandedIdx=null;
+
+  // 2. Jika filter Week 'ALL', ambil hanya minggu terbaru per project agar tidak double
+  if (fWeek === 'ALL') {
+    let latestProjectsMap = {};
+    filteredRaw.forEach(d => {
+      let key = norm(d.namaProject);
+      if (!latestProjectsMap[key] || Number(d.mingguKe) > Number(latestProjectsMap[key].mingguKe)) {
+        latestProjectsMap[key] = d;
+      }
+    });
+    fil = Object.values(latestProjectsMap);
+  } else {
+    fil = filteredRaw;
+  }
+
+  // 3. Sorting agar deadline SPK terdekat berada di posisi paling atas
+  fil.sort((a, b) => {
+    if (!a.spkEnd) return 1;
+    if (!b.spkEnd) return -1;
+    return new Date(a.spkEnd) - new Date(b.spkEnd);
+  });
+
+  expandedIdx = null;
   buildDropdowns();
   renderAll();
 }
-
 function renderAll(){
   rSL(); rDeadlineAlert(); rKPI(); rTable(); rIssues(); rDonut(); rDev(); rSR(); rAlert(); rSummary();
 }
@@ -1107,7 +1146,10 @@ function rSL(){
   const ok=fil.filter(d=>['On Track','Early Stage'].includes(d.status));
   const is=fil.reduce((s,d)=>s+(d.issues||[]).length,0);
   g('acCr').textContent=cr.length;
-  g('acCrS').textContent=cr.length?cr.map(d=>d.namaProject.split(' ').slice(0,2).join(' ')).join(', '):'Semua aman ✓';
+  
+  // Diubah dari sistem potong kata menjadi list poin vertikal utuh agar nama proyek terbaca jelas
+  g('acCrS').innerHTML=cr.length?cr.map(d=>`<div style="white-space:normal; line-height:1.3; margin-top:4px; color:#ef4444; font-size:9px; font-weight:500">• ${d.namaProject}</div>`).join(''):'Semua aman ✓';
+  
   g('acMn').textContent=mn.length;
   g('acMnS').textContent=mn.length+' perlu monitoring';
   g('acIs').textContent=is;
@@ -1218,17 +1260,14 @@ function disiplinRow(d, colspan){
   const NO_HVAC_TIPES=['Touch Up','Touch Up + Hotdak','Bongkaran Bare'];
   const hvacNA = NO_HVAC_TIPES.includes(d.tipeProject) || (NO_HVAC_TIPES.length>0 && d.hvac===0 && NO_HVAC_TIPES.includes(d.tipeProject));
   const tipeTag = d.tipeProject ? `<span style="font-size:8px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(20,184,166,0.15);color:var(--teal);margin-left:6px">${d.tipeProject}</span>` : '';
-  const reportBtn = (d.fileUrl && d.fileUrl.startsWith('http'))
-    ? `<a href="${d.fileUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;font-size:10px;font-weight:700;text-decoration:none;margin-left:auto;flex-shrink:0;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">📄 Buka Laporan (PPTX)</a>`
-    : '';
+  const reportBtn=(d.fileUrl&&d.fileUrl.startsWith('http'))
+    ?`<a href="${d.fileUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:var(--blue);color:#fff;font-size:9px;font-weight:700;text-decoration:none;margin-left:auto;flex-shrink:0">📄 Buka Laporan</a>`
+    :`<span style="margin-left:auto;font-size:8px;color:var(--t3)">📄 Belum ada laporan</span>`;
 
   return `<tr class="expand-row" id="exp-row-${d.namaProject.replace(/\s/g,'_')}">
     <td colspan="${colspan}">
       <div class="expand-inner">
-        <div class="dis-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
-          <span>📐 6 Disiplin Pekerjaan — ${d.namaProject}${tipeTag}</span>
-          ${reportBtn}
-        </div>
+        <div class="dis-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">📐 6 Disiplin Pekerjaan — ${d.namaProject}${tipeTag}${reportBtn}</div>
         <div class="dis-grid">
           ${disBar(d.persiapan,'🔧 Persiapan')}
           ${disBar(d.sipil,'🏗 Sipil & Arsitektur')}
@@ -1306,6 +1345,25 @@ function rTable(){
     tb.innerHTML='<tr><td colspan="10" class="empty">Tidak ada data untuk filter ini</td></tr>';
     return;
   }
+
+  // FITUR SORTING AMAN (Urutkan dari Tgl SPK terdekat ke terlama)
+  try {
+    fil.sort((a, b) => {
+      if (!a.spkEnd) return 1;
+      if (!b.spkEnd) return -1;
+      
+      let timeA = new Date(a.spkEnd).getTime();
+      let timeB = new Date(b.spkEnd).getTime();
+      
+      if (isNaN(timeA)) timeA = 9999999999999;
+      if (isNaN(timeB)) timeB = 9999999999999;
+      
+      return timeA - timeB;
+    });
+  } catch(err) {
+    console.log("Gagal mengurutkan tanggal:", err);
+  }
+
   let html='';
   fil.forEach((d,i)=>{
     const clr=pclr(d.aktual,d.target);
@@ -1313,8 +1371,30 @@ function rTable(){
     const ds=dev>0?'+':''; const dc=dev>0?'dp':dev<0?'dn':'dz';
     const isExp=(expandedIdx===i);
     const ktrShort=(d.kontraktor||'—').length>18?(d.kontraktor||'—').substring(0,16)+'…':(d.kontraktor||'—');
-    const hasFile = d.fileUrl && d.fileUrl.startsWith('http');
-    const fileIcon = hasFile ? `<a href="${d.fileUrl}" target="_blank" title="Buka Laporan PPTX" style="text-decoration:none;margin-left:4px;font-size:11px;vertical-align:middle" onclick="event.stopPropagation()">📄</a>` : '';
+    const hasFile=d.fileUrl&&d.fileUrl.startsWith('http');
+    const fileIcon=hasFile?`<a href="${d.fileUrl}" target="_blank" title="Buka Laporan" style="text-decoration:none;margin-left:3px;font-size:11px" onclick="event.stopPropagation()">📄</a>`:'';
+    
+    // Hitung tren pemulihan vs minggu sebelumnya
+    const normKey = s => (s || '').toLowerCase().replace(/\s+/g,'');
+    const prevW = raw.find(r => 
+      normKey(r.namaProject) === normKey(d.namaProject) && 
+      Number(r.mingguKe) === Number(d.mingguKe) - 1
+    );
+    
+    let trendIndicator = '';
+    if (prevW) {
+      const prevDev = parseF(prevW.deviasi != null ? prevW.deviasi : prevW.aktual - prevW.target);
+      if (dev > prevDev) {
+        trendIndicator = `<span style="color:var(--green); font-size:11px; font-weight:bold; margin-top:3px;" title="Tren Membaik vs minggu lalu (W${prevW.mingguKe} dev: ${prevDev.toFixed(1)}%)">📈 ▲</span>`;
+      } else if (dev < prevDev) {
+        trendIndicator = `<span style="color:var(--red); font-size:11px; font-weight:bold; margin-top:3px;" title="Tren Memburuk vs minggu lalu (W${prevW.mingguKe} dev: ${prevDev.toFixed(1)}%)">📉 ▼</span>`;
+      } else {
+        trendIndicator = `<span style="color:var(--t3); font-size:11px; margin-top:3px;" title="Tren Stagnan vs minggu lalu">➖</span>`;
+      }
+    } else {
+      trendIndicator = `<span style="color:var(--blue); font-size:8.5px; padding:2px 6px; background:rgba(59,130,246,0.1); border-radius:4px; font-weight:700; display:inline-block; line-height:1; margin-top:3px;" title="Proyek Baru / Belum ada histori">New</span>`;
+    }
+
     html+=`<tr data-idx="${i}" class="trow${isExp?' expanded':''}">
       <td>
         <span class="pn">${d.namaProject}${fileIcon}<span class="btag ${BCLS[d.brand]||'bt-c'}">${d.brand}</span></span>
@@ -1336,7 +1416,12 @@ function rTable(){
         </div>
       </td>
       <td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--t2)">${d.target}%</td>
-      <td class="dc"><span class="${dc}">${ds}${dev.toFixed(1)}%</span></td>
+      <td class="dc" style="vertical-align:middle; text-align:center; white-space:nowrap;">
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <span class="${dc}">${ds}${dev.toFixed(1)}%</span>
+          ${trendIndicator}
+        </div>
+      </td>
       <td>${sisaHari(d.spkEnd, d.targetOpening)}</td>
       <td>${sbg(d.status)}</td>
       <td style="color:var(--t3);font-size:11px;text-align:center">${isExp?'▲':'▼'}</td>
@@ -1345,7 +1430,6 @@ function rTable(){
   });
   tb.innerHTML=html;
 }
-
 function toggleRow(i){
   expandedIdx=(expandedIdx===i)?null:i;
   rTable();
@@ -1506,13 +1590,12 @@ function rAlert(){
     ab.style.display='flex'; ab.className='abn';
     const names=cr.map(d=>{
       const nm=d.namaProject||'';
-      const short=nm.length>25?nm.slice(0,25)+'…':nm;
-      return '<b>'+short+'</b>';
+      return '<b>'+nm+'</b>'; // Menampilkan nama proyek utuh tanpa dipotong
     });
-    ab.innerHTML='⚠ <strong>Critical Delay</strong> ('+cr.length+'): '+names.join(', ')+' — segera eskalasi!';
+    var txt='⚠ <strong>Critical Delay</strong> ('+cr.length+'): '+names.join(' · ')+' — segera eskalasi!';
+    ab.innerHTML=cr.length>2?'<span class="abn-inner">'+txt+'&nbsp;&nbsp;'+txt+'</span>':'<span style="white-space:normal">'+txt+'</span>';
   } else ab.style.display='none';
 }
-
 /* ─── PDF EXPORT ─── */
 function exportPDF(){
   const style=document.createElement('style');
@@ -1548,6 +1631,46 @@ function rSummary(){
   const mnProjs=fil.filter(d=>d.status==='Minor Delay');
   const onPct=Math.round(on/t*100);
 
+  // Implementasi Grafik Batang Stacked & Penamaan Lengkap Tanpa Singkatan
+  const pmWorkloadHtml = pms.map(p => {
+    const pProjs = fil.filter(d => d.namaPM === p);
+    const total = pProjs.length;
+    if(!total) return '';
+    const pCr = pProjs.filter(d => d.status === 'Critical Delay').length;
+    const pMn = pProjs.filter(d => d.status === 'Minor Delay').length;
+    const pOn = pProjs.filter(d => d.status === 'On Track').length;
+    const pEa = pProjs.filter(d => d.status === 'Early Stage').length;
+    
+    // Hitung persentase bar untuk grafik batang bertumpuk
+    const pctCr = (pCr / total) * 100;
+    const pctMn = (pMn / total) * 100;
+    const pctOn = (pOn / total) * 100;
+    const pctEa = (pEa / total) * 100;
+
+    return `
+      <div style="background:rgba(255,255,255,0.02); padding:8px 10px; border-radius:6px; margin-top:6px; border:1px solid var(--border);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+          <div style="font-size:11px;">👨‍💼 <b>${p}</b></div>
+          <div style="font-size:11px; color:var(--blue); font-weight:700">${total} Project</div>
+        </div>
+        
+        <div style="display:flex; height:7px; border-radius:4px; overflow:hidden; background:rgba(255,255,255,0.05); margin:6px 0;">
+          ${pCr > 0 ? `<div style="width:${pctCr}%; background:#ef4444;" title="Critical Delay: ${pCr}"></div>` : ''}
+          ${pMn > 0 ? `<div style="width:${pctMn}%; background:#f59e0b;" title="Minor Delay: ${pMn}"></div>` : ''}
+          ${pOn > 0 ? `<div style="width:${pctOn}%; background:#22c55e;" title="On Track: ${pOn}"></div>` : ''}
+          ${pEa > 0 ? `<div style="width:${pctEa}%; background:#3b82f6;" title="Early Stage: ${pEa}"></div>` : ''}
+        </div>
+
+        <div style="font-size:8.5px; display:flex; flex-wrap:wrap; gap:6px; color:var(--t2); margin-top:2px;">
+          ${pCr > 0 ? `<span style="color:#ef4444; font-weight:600">🔴 ${pCr} Critical Delay</span>` : ''}
+          ${pMn > 0 ? `<span style="color:#f59e0b; font-weight:600">⚠ ${pMn} Minor Delay</span>` : ''}
+          ${pOn > 0 ? `<span style="color:#22c55e; font-weight:600">✅ ${pOn} On Track</span>` : ''}
+          ${pEa > 0 ? `<span style="color:#3b82f6; font-weight:600">🔵 ${pEa} Early Stage</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
   g('sumDate').textContent=fmtT(new Date());
   g('summaryBody').innerHTML=`
   <div class="sum-grid">
@@ -1565,6 +1688,12 @@ function rSummary(){
     <b class="red">${cr} project</b> Critical Delay.
     ${ea>0?`<b>${ea} project</b> masih Early Stage.`:''}
   </p>
+  
+  <div style="margin-bottom:12px;">
+    <div style="font-size:9.5px; text-transform:uppercase; font-weight:700; color:var(--t3); letter-spacing:0.05em; margin-bottom:4px">📊 Beban Kerja & Kesehatan per PM</div>
+    ${pmWorkloadHtml}
+  </div>
+
   ${cr>0?`<div class="sum-block">
     <div class="sum-block-title">🔴 Critical Delay — Perlu Eskalasi</div>
     <div class="sum-list">${crProjs.map(d=>`
@@ -1587,7 +1716,6 @@ function rSummary(){
   </div>`:''}
   <p class="sum-para" style="margin-top:8px">Total open issues: <b class="red">${is} item</b> dari <b>${fil.filter(d=>(d.issues||[]).length>0).length} project</b>.</p>`;
 }
-
 /* ─── HELPERS ─── */
 function g(id){return document.getElementById(id);}
 function fmtT(d){return d.toLocaleString('id-ID',{dateStyle:'short',timeStyle:'short'});}
