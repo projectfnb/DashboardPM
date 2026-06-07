@@ -531,6 +531,48 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
   /* Demo fab lebih kecil */
   .demo-fab{font-size:8.5px;padding:4px 9px;}
 }
+.wa-sm-tag{display:inline-flex;flex-direction:column;padding:6px 10px;border-radius:7px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);font-size:10px;cursor:default}
+.wa-sm-tag .wa-sm-name{font-weight:700;color:var(--red)}
+.wa-sm-tag .wa-sm-proj{color:var(--t3);font-size:9px;margin-top:1px}
+.wa-zero-tag{display:inline-flex;flex-direction:column;padding:6px 10px;border-radius:7px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);font-size:10px;cursor:default}
+.wa-zero-tag .wa-zero-proj{font-weight:700;color:var(--yellow)}
+.wa-zero-tag .wa-zero-sm{color:var(--t3);font-size:9px;margin-top:1px}
+/* ── PRE-FITOUT READINESS SECTION ───────────────────────── */
+.pf-section-wrap{margin-top:20px;padding:0 0 32px}
+.pf-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.pf-section-title{font-size:15px;font-weight:800;color:var(--fg);letter-spacing:-.3px}
+.pf-section-subtitle{font-size:11px;color:var(--muted);margin-top:2px}
+.pf-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid}
+.pf-badge.alert{background:#2a0505;border-color:var(--red);color:var(--red)}
+.pf-badge.ok{background:#052a10;border-color:var(--green);color:var(--green)}
+.pf-badge.pending{background:#1a1205;border-color:var(--orange);color:var(--orange)}
+.pf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.pf-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .2s}
+.pf-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.25)}
+.pf-card-header{padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px}
+.pf-card-brand{width:6px;border-radius:3px;flex-shrink:0;align-self:stretch}
+.pf-card-info{flex:1;min-width:0}
+.pf-card-name{font-size:13px;font-weight:800;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-card-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.pf-card-alert{flex-shrink:0}
+.pf-card-body{padding:10px 14px 12px}
+.pf-progress-wrap{margin-bottom:10px}
+.pf-progress-label{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px}
+.pf-progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.pf-progress-fill{height:100%;border-radius:3px;transition:width .4s}
+.pf-checklist-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-bottom:10px}
+.pf-check-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--fg)}
+.pf-check-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.pf-check-dot.done{background:var(--green)}
+.pf-check-dot.proses{background:var(--orange)}
+.pf-check-dot.belum{background:var(--border)}
+.pf-spk-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);font-size:10px;color:var(--muted)}
+.pf-spk-date{font-weight:700;color:var(--fg)}
+.pf-issue-count{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:10px;background:#2a0505;border:1px solid var(--red)44;color:var(--red);font-weight:600}
+.pf-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:12px}
+.pf-divider{height:1px;background:var(--border);margin:20px 0;opacity:.5}
+@keyframes pf-fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.pf-card{animation:pf-fade .3s ease both}
 </style>
 </head>
 <body>
@@ -667,6 +709,33 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
   <div class="mc">
     <div id="abn" style="display:none"></div>
 
+    <!-- WEEKLY SUBMISSION ALERT BANNER -->
+    <div id="weekly-alert-wrap" style="display:none;margin-bottom:14px">
+      <!-- SM Belum Submit -->
+      <div id="weekly-alert-sm" style="display:none;border-radius:10px;overflow:hidden;margin-bottom:8px;border:1.5px solid var(--red);background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.06))">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(239,68,68,.2)">
+          <span style="font-size:18px">🚨</span>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:800;color:var(--red)">SM Belum Submit Laporan Minggu Ini</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:1px">Deadline: <strong style="color:var(--yellow)">Selasa 10:00 WIB</strong> — Senin s/d deadline</div>
+          </div>
+          <div id="weekly-alert-countdown" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;background:rgba(239,68,68,.2);color:var(--red)"></div>
+        </div>
+        <div id="weekly-alert-sm-list" style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <!-- Project Progress 0% -->
+      <div id="weekly-alert-zero" style="display:none;border-radius:10px;overflow:hidden;border:1.5px solid var(--yellow);background:linear-gradient(135deg,rgba(251,191,36,.10),rgba(251,191,36,.04))">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(251,191,36,.2)">
+          <span style="font-size:18px">⚠️</span>
+          <div>
+            <div style="font-size:12px;font-weight:800;color:var(--yellow)">Progress Masih 0% — Belum Ada Input Aktual</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:1px">Project aktif dengan progres aktual = 0</div>
+          </div>
+        </div>
+        <div id="weekly-alert-zero-list" style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+    </div>
+
     <!-- KPI -->
     <div class="krow">
       <div class="kpi kt"><div class="ktop"><span class="kico">📋</span><span class="ktrend tn" id="ktt">—</span></div><div class="kval" id="kt">—</div><div class="klbl">Total Project</div><div class="ksub" id="kts">—</div></div>
@@ -757,6 +826,24 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
       <div class="chd"><div class="cht">📝 Ringkasan Eksekutif</div><div class="cbadge" id="sumDate">—</div></div>
       <div class="summary-body" id="summaryBody">
         <div class="empty">Memuat ringkasan…</div>
+      </div>
+    </div>
+
+    <!-- PRE-FITOUT READINESS SECTION -->
+    <div class="pf-section-wrap" id="pf-section-wrap">
+      <div class="pf-divider"></div>
+      <div class="pf-section-header">
+        <div>
+          <div class="pf-section-title">🔧 Pre-Fitout Readiness</div>
+          <div class="pf-section-subtitle">Monitoring kesiapan project sebelum SPK mulai — diperbarui tiap SM submit</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="pf-last-update" style="font-size:10px;color:var(--muted)"></span>
+          <button class="btn btn-g" style="padding:5px 12px;font-size:11px" onclick="fetchPrefitout()">↻ Refresh</button>
+        </div>
+      </div>
+      <div class="pf-grid" id="pf-grid">
+        <div class="pf-empty">⏳ Memuat data Pre-Fitout...</div>
       </div>
     </div>
   </div>
@@ -1136,7 +1223,98 @@ function applyF() {
   renderAll();
 }
 function renderAll(){
-  rSL(); rDeadlineAlert(); rKPI(); rTable(); rIssues(); rDonut(); rDev(); rSR(); rAlert(); rSummary();
+  rSL(); rDeadlineAlert(); rWeeklyAlert(); rKPI(); rTable(); rIssues(); rDonut(); rDev(); rSR(); rAlert(); rSummary();
+}
+
+/* ─── WEEKLY SUBMISSION ALERT ─── */
+function rWeeklyAlert(){
+  var today = new Date();
+  var dow   = today.getDay(); // 0=Min,1=Sen,...,6=Sab
+
+  // Senin minggu ini
+  var monday = new Date(today);
+  monday.setDate(today.getDate() - ((dow + 6) % 7));
+  monday.setHours(0,0,0,0);
+
+  // Alert window: Senin s/d Selasa jam 10
+  var isAlertWindow = false;
+  if(dow === 1) isAlertWindow = true;
+  if(dow === 2 && today.getHours() < 10) isAlertWindow = true;
+
+  // Untuk testing — paksa alert muncul jika ada data (hapus baris ini di production)
+  // isAlertWindow = true;
+
+  // Countdown ke Selasa 10:00
+  var nextTuesday = new Date(monday);
+  nextTuesday.setDate(monday.getDate() + 1);
+  nextTuesday.setHours(10, 0, 0, 0);
+  if(nextTuesday < today) nextTuesday.setDate(nextTuesday.getDate() + 7);
+  var msLeft = nextTuesday - today;
+  var hLeft  = Math.floor(msLeft / 3600000);
+  var mLeft  = Math.floor((msLeft % 3600000) / 60000);
+  var countdownTxt = hLeft > 24
+    ? Math.ceil(hLeft/24) + ' hari lagi'
+    : hLeft + 'j ' + mLeft + 'm lagi';
+  var cntEl = document.getElementById('weekly-alert-countdown');
+  if(cntEl) cntEl.textContent = countdownTxt;
+
+  // Periode laporan = MINGGU LALU (Senin s/d Minggu kemarin)
+  var lastMonday = new Date(monday);
+  lastMonday.setDate(monday.getDate() - 7);
+  lastMonday.setHours(0,0,0,0);
+  var lastSunday = new Date(monday);
+  lastSunday.setDate(monday.getDate() - 1);
+  lastSunday.setHours(23,59,59,999);
+
+  // Kumpulkan semua project aktif unik beserta SM-nya dari raw data
+  var projectSM = {}; // namaProject → sm
+  raw.forEach(function(d){
+    if(!d.namaProject || d.namaProject==='—') return;
+    if(!projectSM[d.namaProject]) projectSM[d.namaProject] = d.sm || '—';
+  });
+
+  // Cari project yang sudah submit untuk periode minggu lalu
+  // = ada baris dengan periodeStart atau periodeEnd masuk rentang lastMonday–lastSunday
+  var submittedLastWeek = {};
+  raw.forEach(function(d){
+    if(!d.namaProject || d.namaProject==='—') return;
+    // Parse periodeStart & periodeEnd — coba dari field yang sudah dinormalisasi
+    var ps = null, pe = null;
+    if(d.periodeStart){ ps = new Date(d.periodeStart); if(isNaN(ps)) ps=null; }
+    if(d.periodeEnd)  { pe = new Date(d.periodeEnd);   if(isNaN(pe)) pe=null; }
+    // Masuk periode minggu lalu jika periodeStart >= lastMonday ATAU periodeEnd <= lastSunday
+    var inLastWeek = (ps && ps >= lastMonday && ps <= lastSunday)
+                  || (pe && pe >= lastMonday && pe <= lastSunday);
+    if(inLastWeek) submittedLastWeek[d.namaProject] = true;
+  });
+
+  // SM belum submit = project aktif yang tidak ada di submittedLastWeek
+  var notSubmitted = [];
+  Object.keys(projectSM).forEach(function(pname){
+    if(!submittedLastWeek[pname]){
+      notSubmitted.push({ project: pname, sm: projectSM[pname] });
+    }
+  });
+
+  var wrap   = document.getElementById('weekly-alert-wrap');
+  var smWrap = document.getElementById('weekly-alert-sm');
+  var smList = document.getElementById('weekly-alert-sm-list');
+  var zWrap  = document.getElementById('weekly-alert-zero');
+  if(zWrap) zWrap.style.display = 'none';
+
+  if(isAlertWindow && notSubmitted.length){
+    wrap.style.display   = 'block';
+    smWrap.style.display = 'block';
+    smList.innerHTML = notSubmitted.map(function(p){
+      return '<div class="wa-sm-tag">'+
+        '<span class="wa-sm-name">👤 '+p.sm+'</span>'+
+        '<span class="wa-sm-proj">'+p.project+'</span>'+
+      '</div>';
+    }).join('');
+  } else {
+    wrap.style.display   = 'none';
+    smWrap.style.display = 'none';
+  }
 }
 
 /* ─── LEFT SIDEBAR (status alert only, SM sudah jadi dropdown) ─── */
@@ -1741,6 +1919,202 @@ function initTheme(){
   const btn=g('themeBtn');
   if(btn) btn.textContent=saved==='light'?'🌙 Dark':'☀️ Light';
 }
+// ══════════════════════════════════════════════════════════
+// PRE-FITOUT READINESS — Dashboard PM v17
+// ══════════════════════════════════════════════════════════
+
+var pfRaw = []; // raw data dari GAS action=getPrefitout
+
+// Checklist keys & labels (sesuai GAS PF_COLS)
+var PF_CHECK_ITEMS = [
+  {key:'SPK Terbit',               label:'SPK Terbit'},
+  {key:'Approval Gbr LL',          label:'Approval Gbr'},
+  {key:'Air Bersih',               label:'Air Bersih'},
+  {key:'Coring Air Kotor',         label:'Air Kotor'},
+  {key:'Listrik Kerja',            label:'Listrik'},
+  {key:'Deposit Fitout',           label:'Deposit'},
+  {key:'Biaya Fasilitas',          label:'Biaya Fas.'},
+  {key:'Lain-lain',                label:'Lain-lain'},
+  {key:'Lantai Bare',              label:'Lantai Bare'},
+  {key:'Dinding Bare',             label:'Dinding Bare'},
+  {key:'Dinding Antar Lease Line', label:'Dinding LL'},
+];
+
+function fetchPrefitout(){
+  if(!GAS) return;
+  var url = GAS + (GAS.indexOf('?')>=0?'&':'?') + 'action=getPrefitout';
+  var el  = document.getElementById('pf-last-update');
+  if(el) el.textContent = '⏳ Memuat...';
+
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      pfRaw = (j && j.ok && Array.isArray(j.data)) ? j.data : [];
+      if(el) el.textContent = 'Update: ' + new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+      renderPrefitout();
+    })
+    .catch(function(){
+      if(el) el.textContent = 'Gagal memuat';
+      renderPrefitout();
+    });
+}
+
+function renderPrefitout(){
+  var grid = document.getElementById('pf-grid');
+  if(!grid) return;
+
+  if(!pfRaw.length){
+    grid.innerHTML = '<div class="pf-empty">📭 Tidak ada data Pre-Fitout saat ini.<br><span style="font-size:10px;opacity:.6">SM belum submit checklist pre-fitout.</span></div>';
+    return;
+  }
+
+  var today = new Date(); today.setHours(0,0,0,0);
+
+  // Filter: hanya project yang SPK Mulai > hari ini (belum aktif)
+  var pfFiltered = pfRaw.filter(function(row){
+    var spk = row['SPK Mulai'] || '';
+    if(!spk) return true; // SPK kosong tetap tampilkan
+    var spkDate = new Date(spk); spkDate.setHours(0,0,0,0);
+    return spkDate > today;
+  });
+
+  if(!pfFiltered.length){
+    grid.innerHTML = '<div class="pf-empty">✅ Semua project pre-fitout sudah aktif.<br><span style="font-size:10px;opacity:.6">Tidak ada project yang menunggu SPK mulai.</span></div>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  pfFiltered.forEach(function(row, cardIdx){
+    var namaProject = row['Nama Project'] || '—';
+    var namaSM      = row['Nama SM']      || '—';
+    var brand       = row['Brand']        || '';
+    var spkStart    = row['SPK Mulai']    || '';
+    var timestamp   = row['Timestamp']    || '';
+
+    // Hitung readiness %
+    var doneCount = 0;
+    PF_CHECK_ITEMS.forEach(function(item){
+      var val = row[item.key] || 'Belum';
+      if(val === 'Sudah' || val === 'Done') doneCount++;
+    });
+    var pct = Math.round(doneCount / PF_CHECK_ITEMS.length * 100);
+
+    // Hitung H-X menuju SPK Mulai
+    var diffDays = null;
+    var spkDisplay = '—';
+    if(spkStart){
+      var spkDate = new Date(spkStart); spkDate.setHours(0,0,0,0);
+      diffDays    = Math.ceil((spkDate - today) / 86400000);
+      spkDisplay  = spkDate.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+    }
+
+    // Status alert
+    var isAlert = diffDays !== null && diffDays <= 7 && diffDays >= 0 && pct < 100;
+    var isUrgent= diffDays !== null && diffDays <= 3 && diffDays >= 0 && pct < 100;
+
+    // Issue & Kendala
+    var issues = [];
+    try{
+      var rawIss = row['Issue & Kendala'] || '[]';
+      if(typeof rawIss === 'string') issues = JSON.parse(rawIss);
+      else if(Array.isArray(rawIss))  issues = rawIss;
+    }catch(e){ issues = []; }
+    var issueList  = issues.filter(function(i){ return i && i.text && i.text.trim(); });
+    var issueCount = issueList.length;
+
+    // Brand color
+    var brandCol = BCOL[brand] || '#7c3aed';
+
+    // Progress bar color
+    var barColor = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--orange)' : 'var(--red)';
+
+    // H-X label
+    var hxLabel = '';
+    if(diffDays !== null){
+      if(diffDays < 0)       hxLabel = '<span style="color:var(--green);font-weight:700">SPK Aktif</span>';
+      else if(diffDays === 0) hxLabel = '<span style="color:var(--red);font-weight:800">H-0 Hari Ini!</span>';
+      else                    hxLabel = '<span style="color:'+(isUrgent?'var(--red)':isAlert?'var(--orange)':'var(--muted)')+';font-weight:700">H-'+diffDays+'</span>';
+    }
+
+    // Render checklist dots grid
+    var dotsHTML = PF_CHECK_ITEMS.map(function(item){
+      var val = row[item.key] || 'Belum';
+      var dotCls = (val==='Sudah'||val==='Done') ? 'done' : val==='Proses' ? 'proses' : 'belum';
+      return '<div class="pf-check-item"><div class="pf-check-dot '+dotCls+'"></div><span>'+item.label+'</span></div>';
+    }).join('');
+
+    // Alert badge
+    var alertBadge = isUrgent
+      ? '<span class="pf-badge alert">⚠️ URGENT H-'+diffDays+'</span>'
+      : isAlert
+      ? '<span class="pf-badge pending">⏰ H-'+diffDays+'</span>'
+      : pct===100
+      ? '<span class="pf-badge ok">✅ Siap</span>'
+      : '<span class="pf-badge pending">'+pct+'% Siap</span>';
+
+    // Last update
+    var lastUpdate = timestamp ? timestamp.split(' ')[0] : '—';
+
+    var card = document.createElement('div');
+    card.className = 'pf-card';
+    card.style.animationDelay = (cardIdx * 0.06) + 's';
+    if(isUrgent) card.style.borderColor = 'var(--red)';
+    else if(isAlert) card.style.borderColor = 'var(--orange)';
+
+    card.innerHTML =
+      '<div class="pf-card-header">'+
+        '<div class="pf-card-brand" style="background:'+brandCol+'"></div>'+
+        '<div class="pf-card-info">'+
+          '<div class="pf-card-name" title="'+namaProject+'">'+namaProject+'</div>'+
+          '<div class="pf-card-meta">'+brand+' &nbsp;•&nbsp; SM: '+namaSM+'</div>'+
+        '</div>'+
+        '<div class="pf-card-alert">'+alertBadge+'</div>'+
+      '</div>'+
+      '<div class="pf-card-body">'+
+        '<div class="pf-progress-wrap">'+
+          '<div class="pf-progress-label"><span>Readiness</span><span style="font-weight:700;color:var(--fg)">'+pct+'%</span></div>'+
+          '<div class="pf-progress-bar"><div class="pf-progress-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>'+
+        '</div>'+
+        '<div class="pf-checklist-grid">'+dotsHTML+'</div>'+
+        '<div class="pf-spk-row">'+
+          '<span>SPK Mulai</span>'+
+          '<div style="display:flex;align-items:center;gap:8px">'+
+            '<span class="pf-spk-date">'+spkDisplay+'</span>'+
+            hxLabel+
+          '</div>'+
+        '</div>'+
+        '<div style="font-size:9px;color:var(--muted);margin-top:4px;text-align:right">Diperbarui: '+lastUpdate+'</div>'+
+      '</div>'+
+      // Issue & Kendala — selalu tampil jika ada
+      (issueCount > 0
+        ? '<div style="padding:10px 14px 12px;border-top:1px solid var(--border);background:rgba(239,68,68,.04)">'+
+            '<div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:8px">🚨 Issue & Kendala ('+issueCount+')</div>'+
+            issueList.map(function(iss, ii){
+              return '<div style="padding:6px 0;border-bottom:1px solid var(--border)33;font-size:10px">'+
+                '<div style="font-weight:600;color:var(--fg);margin-bottom:3px">'+(ii+1)+'. '+iss.text+'</div>'+
+                '<div style="color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">'+
+                  (iss.kategori ? '<span>📂 '+iss.kategori+'</span>' : '')+
+                  (iss.pic      ? '<span>👤 '+iss.pic+'</span>'      : '')+
+                  (iss.target   ? '<span>🗓 '+fmtD(iss.target)+'</span>' : '')+
+                '</div>'+
+              '</div>';
+            }).join('')+
+          '</div>'
+        : '')+
+      '</div>';
+
+    grid.appendChild(card);
+  });
+}
+
+// Auto-fetch Pre-Fitout saat dashboard load
+(function(){
+  var origFetchGAS = fetchGAS;
+  fetchGAS = function(){
+    origFetchGAS();
+    setTimeout(fetchPrefitout, 1500); // delay sedikit agar GAS tidak kena rate limit
+  };
+})();
 </script>
 </body>
 </html>
