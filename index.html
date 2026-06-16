@@ -741,7 +741,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
           <span style="font-size:18px">🚨</span>
           <div style="flex:1">
             <div style="font-size:12px;font-weight:800;color:var(--red)">SM Belum Submit Laporan Minggu Ini</div>
-            <div style="font-size:10px;color:var(--t3);margin-top:1px">Deadline: <strong style="color:var(--yellow)">Selasa 10:00 WIB</strong> — Senin s/d deadline</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:1px">Deadline: <strong style="color:var(--yellow)">Selasa 15:00 WIB</strong> — Senin s/d deadline</div>
           </div>
           <div id="weekly-alert-countdown" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;background:rgba(239,68,68,.2);color:var(--red)"></div>
         </div>
@@ -753,7 +753,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
           <span style="font-size:18px">✅</span>
           <div>
             <div style="font-size:12px;font-weight:800;color:var(--green)">SM Sudah Submit Minggu Ini</div>
-            <div style="font-size:10px;color:var(--t3);margin-top:1px">Laporan diterima sebelum deadline Selasa 10:00</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:1px">Laporan diterima sebelum deadline Selasa 15:00</div>
           </div>
         </div>
         <div id="weekly-alert-done-list" style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px"></div>
@@ -1326,13 +1326,14 @@ function rWeeklyAlert(){
   monday.setDate(today.getDate() - ((dow + 6) % 7));
   monday.setHours(0,0,0,0);
 
-  // Alert window: Senin s/d Selasa jam 10
-  var isAlertWindow = (dow === 1) || (dow === 2 && today.getHours() < 10);
+  // Alert window: Senin s/d Selasa jam 15:00
+  // Setelah Selasa 15:00, banner hilang sampai Senin minggu depan
+  var isAlertWindow = (dow === 1) || (dow === 2 && (today.getHours() < 15));
 
-  // Countdown ke Selasa 10:00
+  // Countdown ke Selasa 15:00
   var nextTuesday = new Date(monday);
   nextTuesday.setDate(monday.getDate() + 1);
-  nextTuesday.setHours(10,0,0,0);
+  nextTuesday.setHours(15,0,0,0);
   if(nextTuesday < today) nextTuesday.setDate(nextTuesday.getDate() + 7);
   var msLeft = nextTuesday - today;
   var hLeft  = Math.floor(msLeft/3600000);
