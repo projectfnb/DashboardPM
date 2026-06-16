@@ -875,8 +875,11 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
       <div class="sbrow"><span class="sbk">Brand Aktif</span><span class="sbv" id="sbB">—</span></div>
     </div>
 
-    <!-- PRE-FITOUT READINESS — dipindah ke right sidebar -->
-    <div style="margin-top:2px">
+    <div class="stitle" style="margin-top:2px">All Projects</div>
+    <div id="pcards" style="display:flex;flex-direction:column;gap:4px"><div class="empty">—</div></div>
+
+    <!-- PRE-FITOUT READINESS — di bawah All Projects -->
+    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
         <div class="stitle" style="margin-bottom:0">🔧 Pre-Fitout</div>
         <div style="display:flex;align-items:center;gap:4px">
@@ -893,9 +896,6 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
       <!-- Empty state -->
       <div id="pf-empty" style="font-size:9px;color:var(--t3);text-align:center;padding:8px">⏳ Memuat...</div>
     </div>
-
-    <div class="stitle" style="margin-top:2px">All Projects</div>
-    <div id="pcards" style="display:flex;flex-direction:column;gap:4px"><div class="empty">—</div></div>
   </div>
 </div>
 
@@ -1104,7 +1104,17 @@ function fmtD(s){
 function normalizeRow(d){
   const steps = d.steps || {};
   /* ── Aktual: coba semua kemungkinan nama field ── */
-  const aktual = parseF(d['Aktual Progres'] ?? d['Aktual Progress'] ?? d.aktual ?? d.progress);
+  var aktualRaw = parseF(d['Aktual Progres'] ?? d['Aktual Progress'] ?? d.aktual ?? d.progress);
+  /* ── 6 Disiplin — hitung juga rata-ratanya ── */
+  var persiapanV = parseF(steps.persiapan ?? d['Progres Persiapan'] ?? d['Persiapan (%)']          ?? d.persiapan);
+  var sipilV     = parseF(steps.sipil     ?? d['Progres Sipil']     ?? d['Sipil & Arsitektur (%)'] ?? d.sipil);
+  var meV        = parseF(steps.me        ?? d['Progres ME']        ?? d['ME (%)']                 ?? d.me);
+  var plumbingV  = parseF(steps.plumbing  ?? d['Progres Plumbing']  ?? d['Plumbing & Gas (%)']     ?? d.plumbing);
+  var hvacV      = parseF(steps.hvac      ?? d['Progres HVAC']      ?? d['HVAC (%)']               ?? d.hvac);
+  var fixtureV   = parseF(steps.fixture   ?? d['Progres Fixture']   ?? d['Furniture & Fixture (%)']?? d.fixture);
+  // Jika semua 6 disiplin = 100, override aktual ke 100
+  var allDone = persiapanV>=100 && sipilV>=100 && meV>=100 && plumbingV>=100 && hvacV>=100 && fixtureV>=100;
+  var aktual = allDone ? 100 : aktualRaw;
   /* ── Target ── */
   const target = parseF(d['Target Pekan ini'] ?? d['Target Pekan Ini'] ?? d['Target Progress'] ?? d.target);
   /* ── Status ── */
@@ -1136,12 +1146,12 @@ function normalizeRow(d){
     eskalasi:     d['Eskalasi PM']  || d.eskalasi       || 'Tidak',
     eskalasiKet:  d['Detail Eskalasi'] || d.detailEskalasi || d.eskalasiKet || '',
     kendala:      d['Issue & Kendala'] || d.kendala     || '',
-    persiapan:    parseF(steps.persiapan ?? d['Progres Persiapan'] ?? d['Persiapan (%)']          ?? d.persiapan),
-    sipil:        parseF(steps.sipil     ?? d['Progres Sipil']     ?? d['Sipil & Arsitektur (%)'] ?? d.sipil),
-    me:           parseF(steps.me        ?? d['Progres ME']        ?? d['ME (%)']                 ?? d.me),
-    plumbing:     parseF(steps.plumbing  ?? d['Progres Plumbing']  ?? d['Plumbing & Gas (%)']     ?? d.plumbing),
-    hvac:         parseF(steps.hvac      ?? d['Progres HVAC']      ?? d['HVAC (%)']               ?? d.hvac),
-    fixture:      parseF(steps.fixture   ?? d['Progres Fixture']   ?? d['Furniture & Fixture (%)']?? d.fixture),
+    persiapan:    persiapanV,
+    sipil:        sipilV,
+    me:           meV,
+    plumbing:     plumbingV,
+    hvac:         hvacV,
+    fixture:      fixtureV,
     timestamp:    (d['Timestamp'] || d.timestamp || '').toString().trim(),
     issues:       d.issues || (function(){
                     var raw = d['Issue & Kendala'] || d.kendala || '';
@@ -1262,28 +1272,10 @@ function applyF() {
   // 2. Jika filter Week 'ALL', ambil hanya minggu terbaru per project agar tidak double
   if (fWeek === 'ALL') {
     let latestProjectsMap = {};
-    // [v23] Pass 1: kumpulkan fileUrl terbaru (non-kosong) per project dulu
-    let bestFileUrlMap = {};
-    filteredRaw.forEach(d => {
-      let key = norm(d.namaProject);
-      if(d.fileUrl && d.fileUrl.startsWith('http')){
-        // Simpan fileUrl dengan mingguKe terbesar (file laporan terbaru)
-        if(!bestFileUrlMap[key] || Number(d.mingguKe) >= Number((bestFileUrlMap[key].mingguKe)||0)){
-          bestFileUrlMap[key] = { url: d.fileUrl, mingguKe: d.mingguKe };
-        }
-      }
-    });
-    // Pass 2: ambil row terbaru per project, lalu inject fileUrl terbaik
     filteredRaw.forEach(d => {
       let key = norm(d.namaProject);
       if (!latestProjectsMap[key] || Number(d.mingguKe) > Number(latestProjectsMap[key].mingguKe)) {
         latestProjectsMap[key] = d;
-      }
-    });
-    // Pass 3: inject fileUrl terbaik ke row terbaru jika row terbaru tidak punya fileUrl
-    Object.keys(latestProjectsMap).forEach(key => {
-      if((!latestProjectsMap[key].fileUrl || !latestProjectsMap[key].fileUrl.startsWith('http')) && bestFileUrlMap[key]){
-        latestProjectsMap[key] = Object.assign({}, latestProjectsMap[key], { fileUrl: bestFileUrlMap[key].url });
       }
     });
     fil = Object.values(latestProjectsMap);
@@ -1307,6 +1299,13 @@ function applyF() {
       d.status = 'Critical Delay'; // Override paksa
       d._overdue = true; // flag untuk info tambahan di tabel
     }
+  });
+
+  // Project dengan status 'Selesai' ATAU aktual 100% tidak ditampilkan di tabel aktif
+  fil = fil.filter(function(d){
+    var statusSelesai = (d.status||'').toLowerCase() === 'selesai';
+    var aktualSelesai = (d.aktual || 0) >= 100;
+    return !statusSelesai && !aktualSelesai;
   });
 
   expandedIdx = null;
@@ -1350,16 +1349,22 @@ function rWeeklyAlert(){
   // smProjects: { smName → { projects: {namaProject: bool}, submittedProjects: {namaProject: tsDate}, latestTs: {} } }
   var smProjects = {};
 
-  // Kumpulkan semua project aktif per SM (deduplicate by namaProject - ambil row manapun)
+  // Normalisasi nama project untuk perbandingan (lowercase, hapus spasi berlebih)
+  function normProj(s){ return (s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
+
+  // Kumpulkan semua project aktif per SM — key pakai normProj
   raw.forEach(function(d){
     if(!d.namaProject || d.namaProject==='—') return;
     if(!d.sm || d.sm==='—') return;
     var spkMulai = d.spkStart ? new Date(d.spkStart) : null;
     if(spkMulai) spkMulai.setHours(0,0,0,0);
-    var isAktif = !spkMulai || spkMulai <= today2;
+    var isAktif = spkMulai && spkMulai <= today2; // harus ada SPK Mulai dan sudah lewat
     if(!isAktif) return;
-    if(!smProjects[d.sm]) smProjects[d.sm] = { projects:{}, submittedProjects:{}, latestTs:{} };
-    smProjects[d.sm].projects[d.namaProject] = true;
+    if((d.aktual || 0) >= 100) return; // project 100% tidak perlu ditagih submit
+    if(!smProjects[d.sm]) smProjects[d.sm] = { projects:{}, submittedProjects:{}, latestTs:{}, displayNames:{} };
+    var nk = normProj(d.namaProject);
+    smProjects[d.sm].projects[nk] = true;
+    smProjects[d.sm].displayNames[nk] = d.namaProject; // simpan nama asli untuk display
   });
 
   // Cek submission minggu ini: per SM+Project
@@ -1368,13 +1373,29 @@ function rWeeklyAlert(){
   // Untuk handle keduanya, coba parse kedua format
   function parseTimestamp(ts){
     if(!ts) return null;
-    // Format lengkap: "06/06/2026 10:23:45" atau "6/6/2026 10:23:45"
+    // Format lengkap: "06/06/2026 10:23:45" atau "6/6/2026 10:23:45" -> dd/MM/yyyy
     var m = ts.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
     if(m) return new Date(+m[3], +m[2]-1, +m[1], +m[4], +m[5], m[6]?+m[6]:0);
-    // Format tanggal saja: "2026-06-06" atau "06/06/2026" tanpa jam
+    // Format "yyyy-MM-dd" atau "yyyy-dd-MM" (GAS kadang swap hari/bulan)
+    // Deteksi: jika bagian ke-2 > 12, berarti itu hari bukan bulan -> swap
     // → anggap jam 00:00 hari itu (tidak bisa tahu jam aslinya)
     var m2 = ts.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if(m2) return new Date(+m2[1], +m2[2]-1, +m2[3], 0, 0, 0);
+    if(m2){
+      var y=+m2[1], a=+m2[2], b=+m2[3];
+      var month, day;
+      if(a > 12){ day=a; month=b; } // yyyy-dd-MM -> swap
+      else { month=a; day=b; }      // yyyy-MM-dd -> normal
+      var parsed = new Date(y, month-1, day, 0, 0, 0);
+      // Guard: jika hasil parse > hari ini + 7 hari, coba swap hari/bulan
+      var _now = new Date(); _now.setHours(0,0,0,0);
+      if(parsed > new Date(_now.getTime() + 7*86400000)){
+        // Kemungkinan swap: coba tukar month<->day
+        var parsed2 = new Date(y, day-1, month, 0, 0, 0);
+        if(parsed2 <= new Date(_now.getTime() + 7*86400000)) return parsed2;
+        return null; // tidak bisa dipercaya, abaikan
+      }
+      return parsed;
+    }
     var m3 = ts.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if(m3) return new Date(+m3[3], +m3[2]-1, +m3[1], 0, 0, 0);
     return new Date(ts);
@@ -1383,34 +1404,40 @@ function rWeeklyAlert(){
   raw.forEach(function(d){
     if(!d.sm || d.sm==='—') return;
     if(!smProjects[d.sm]) return;
-    if(!smProjects[d.sm].projects[d.namaProject]) return; // project ini bukan project aktif SM ini
+    var nk = normProj(d.namaProject);
+    if(!smProjects[d.sm].projects[nk]) return; // bukan project aktif SM ini
     var tsDate = parseTimestamp(d.timestamp);
     if(!tsDate || isNaN(tsDate)) return;
     if(tsDate >= monday){
-      // Project ini sudah submit minggu ini
-      smProjects[d.sm].submittedProjects[d.namaProject] = true;
-      // Simpan timestamp terbaru
-      var prev = smProjects[d.sm].latestTs[d.namaProject];
-      if(!prev || tsDate > prev) smProjects[d.sm].latestTs[d.namaProject] = tsDate;
+      smProjects[d.sm].submittedProjects[nk] = true;
+      var prev = smProjects[d.sm].latestTs[nk];
+      if(!prev || tsDate > prev) smProjects[d.sm].latestTs[nk] = tsDate;
     }
   });
 
   // SM yang belum submit: hitung PER PROJECT
   // SM dianggap "belum submit" jika ada project aktifnya yang BELUM ada submission minggu ini
-  var notSubmitted = []; // [{sm, projects:[namaProject yang belum submit]}]
+  var notSubmitted = [];
   Object.keys(smProjects).forEach(function(smName){
-    var allProjects = Object.keys(smProjects[smName].projects);
-    var notSubmittedProjects = allProjects.filter(function(proj){
-      return !smProjects[smName].submittedProjects[proj];
+    var allKeys = Object.keys(smProjects[smName].projects);
+    var notDoneKeys = allKeys.filter(function(nk){
+      return !smProjects[smName].submittedProjects[nk];
     });
-    if(notSubmittedProjects.length > 0){
-      notSubmitted.push({ sm: smName, projects: notSubmittedProjects });
+    if(notDoneKeys.length > 0){
+      notSubmitted.push({
+        sm: smName,
+        projects: notDoneKeys.map(function(nk){ return smProjects[smName].displayNames[nk] || nk; })
+      });
     }
   });
-  // Sort by SM name
   notSubmitted.sort(function(a,b){ return a.sm.localeCompare(b.sm); });
 
-  var wrap     = document.getElementById('weekly-alert-wrap');
+  var alreadyDone = Object.keys(smProjects).filter(function(sm){
+    var allKeys = Object.keys(smProjects[sm].projects);
+    if(!allKeys.length) return false;
+    return allKeys.every(function(nk){ return smProjects[sm].submittedProjects[nk]; });
+  });
+  alreadyDone.sort(function(a,b){ return a.localeCompare(b); });
   var smWrap   = document.getElementById('weekly-alert-sm');
   var smList   = document.getElementById('weekly-alert-sm-list');
   var doneWrap = document.getElementById('weekly-alert-done');
@@ -1418,26 +1445,21 @@ function rWeeklyAlert(){
   var zWrap    = document.getElementById('weekly-alert-zero');
   if(zWrap) zWrap.style.display='none';
 
-  // SM sudah submit minggu ini = SEMUA project aktifnya ada submisi minggu ini
-  // SM partial (sebagian submit) = masuk notSubmitted untuk project yang belum
-  var alreadyDone = Object.keys(smProjects).filter(function(sm){
-    var allProjects = Object.keys(smProjects[sm].projects);
-    if(!allProjects.length) return false;
-    return allProjects.every(function(proj){ return smProjects[sm].submittedProjects[proj]; });
-  });
-  alreadyDone.sort(function(a,b){ return a.localeCompare(b); });
-
   var anyAlert = false;
 
-  if(isAlertWindow && notSubmitted.length){
+  // Belum submit — selalu tampil, bukan hanya saat alert window
+  if(notSubmitted.length){
     anyAlert = true;
     smWrap.style.display = 'block';
     smList.innerHTML = notSubmitted.map(function(p){
-      var projStr    = p.projects.length===1 ? p.projects[0] : p.projects.length+' project';
-      var projDetail = p.projects.length>1 ? '<span class="wa-sm-proj-list">'+p.projects.join(' · ')+'</span>' : '';
-      return '<div class="wa-sm-tag">'+
+      var projDetail = '<div style="margin-top:2px">'+p.projects.map(function(pr){
+        return '<span style="display:block;font-size:7.5px;color:var(--t2);padding-left:2px">• '+pr+'</span>';
+      }).join('')+'</div>';
+      var urgentStyle = isAlertWindow
+        ? '' // warna default merah dari CSS .wa-sm-tag
+        : 'opacity:0.7;border-color:rgba(239,68,68,0.3)'; // di luar window = lebih redup
+      return '<div class="wa-sm-tag" style="'+urgentStyle+'">'+
         '<span class="wa-sm-name">👤 '+p.sm+'</span>'+
-        '<span class="wa-sm-proj">'+projStr+'</span>'+
         projDetail+
       '</div>';
     }).join('');
@@ -1445,22 +1467,22 @@ function rWeeklyAlert(){
     if(smWrap) smWrap.style.display='none';
   }
 
-  if(isAlertWindow && alreadyDone.length){
+  // Sudah submit — selalu tampil
+  if(alreadyDone.length){
     anyAlert = true;
     if(doneWrap) doneWrap.style.display='block';
     if(doneList) doneList.innerHTML = alreadyDone.map(function(sm){
-      // Cari jam submit terbaru dari semua project yang sudah submit
       var latestDate = null;
       var ltMap = smProjects[sm] ? smProjects[sm].latestTs : {};
       Object.values(ltMap).forEach(function(tsDate){
         if(!latestDate || tsDate > latestDate) latestDate = tsDate;
       });
       var latestTs = '';
-      if(latestDate && latestDate.getHours() + latestDate.getMinutes() > 0){
-        // Hanya tampilkan jam jika bukan 00:00 (artinya jam asli ada)
+      if(latestDate && (latestDate.getHours() + latestDate.getMinutes()) > 0){
         latestTs = String(latestDate.getHours()).padStart(2,'0') + ':' + String(latestDate.getMinutes()).padStart(2,'0');
       }
-      var submittedProjs = Object.keys(smProjects[sm].submittedProjects);
+      var submittedProjs = Object.keys(smProjects[sm].submittedProjects)
+        .map(function(nk){ return smProjects[sm].displayNames[nk] || nk; });
       var projListHtml = submittedProjs.map(function(p){
         return '<span style="display:block;font-size:7.5px;color:var(--t2);padding-left:2px">• '+p+'</span>';
       }).join('');
@@ -1477,7 +1499,8 @@ function rWeeklyAlert(){
     if(doneWrap) doneWrap.style.display='none';
   }
 
-  if(wrap) wrap.style.display = anyAlert ? 'block' : 'none';
+  var wrap = document.getElementById('weekly-alert-wrap');
+  if(wrap) wrap.style.display = (notSubmitted.length || alreadyDone.length) ? 'block' : 'none';
 }
 
 /* ─── LEFT SIDEBAR (status alert only, SM sudah jadi dropdown) ─── */
@@ -1671,6 +1694,14 @@ function disiplinRow(d, colspan){
           <div class="exp-meta-box">
             <div class="exp-meta-title">📅 Timeline Data</div>
             <div class="exp-meta-rows">
+              <div class="exp-meta-row" style="background:rgba(20,184,166,0.06);border-radius:4px;padding:3px 4px;margin-bottom:3px">
+                <span class="exp-meta-key" style="color:var(--teal);font-weight:700">Periode Laporan</span>
+                <span class="exp-meta-val" style="color:var(--teal);font-weight:700">${d.periodeStart&&d.periodeEnd ? (fmtD(d.periodeStart)||d.periodeStart)+' – '+(fmtD(d.periodeEnd)||d.periodeEnd) : '—'}</span>
+              </div>
+              <div class="exp-meta-row" style="margin-bottom:3px">
+                <span class="exp-meta-key" style="color:var(--t3)">🕐 Disubmit</span>
+                <span class="exp-meta-val" style="color:var(--t3);font-size:8px">${d.timestamp || '—'}</span>
+              </div>
               <div class="exp-meta-row">
                 <span class="exp-meta-key">SPK Mulai</span>
                 ${metaVal(d.spkStart)}
@@ -1834,51 +1865,26 @@ function toggleIssueDetail(projKey){
 
 function rIssues(){
   const c=g('ilist');
-  const norm = s => (s||'').toLowerCase().replace(/\s+/g,'');
 
-  // Bangun map: namaProject → data minggu terbaru (dari fil)
-  // dan data minggu sebelumnya (dari raw, mingguKe - 1)
+  // Bangun map: namaProject → issue minggu ini saja (dari fil = data terbaru)
+  // Tidak ada perbandingan minggu lalu — hanya yang diinput SM minggu ini
   const grouped={};
   fil.forEach(d=>{
-    const key = norm(d.namaProject);
-    // Cari data minggu sebelumnya dari raw
-    const prevW = raw.find(r =>
-      norm(r.namaProject) === key &&
-      Number(r.mingguKe) === Number(d.mingguKe) - 1
-    );
     const currentIssues = d.issues || [];
-    const prevIssues    = prevW ? (prevW.issues || []) : [];
-
-    // Normalisasi teks issue untuk perbandingan (lowercase, trim)
-    const normIss = s => (s||'').toLowerCase().trim();
-    const currentSet = new Set(currentIssues.map(normIss));
-    const prevSet    = new Set(prevIssues.map(normIss));
-
-    // Issue baru di minggu ini (tidak ada di minggu lalu)
-    const newIssues  = currentIssues.filter(i => !prevSet.has(normIss(i)));
-    // Issue yang masih ada dari minggu lalu (ongoing, diinput ulang)
-    const ongoingIssues = currentIssues.filter(i => prevSet.has(normIss(i)));
-    // Issue minggu lalu yang TIDAK muncul lagi di minggu ini → status tidak diketahui
-    const droppedIssues = prevIssues.filter(i => !currentSet.has(normIss(i)));
-
-    const hasAny = currentIssues.length > 0 || droppedIssues.length > 0 || (d.carryOver && d.carryOver.trim());
-    if(!hasAny) return;
+    const hasCarryOver  = d.carryOver && d.carryOver.trim();
+    if(!currentIssues.length && !hasCarryOver) return;
 
     grouped[d.namaProject] = {
       sm: d.sm, brand: d.brand, status: d.status,
       mingguKe: d.mingguKe,
-      newIssues,      // issue baru minggu ini
-      ongoingIssues,  // issue lama yang diinput ulang = masih open
-      droppedIssues,  // issue lama yang hilang = perlu konfirmasi
-      prevMingguKe: prevW ? prevW.mingguKe : null,
+      issues:    currentIssues,
       carryOver: d.carryOver || ''
     };
   });
 
-  // Hitung total untuk badge — hanya yang confirmed open (current week)
+  // Badge count = total issue minggu ini
   const totalCurrent = fil.reduce((s,d)=>s+(d.issues||[]).length, 0);
-  const totalDropped = Object.values(grouped).reduce((s,g)=>s+g.droppedIssues.length, 0);
-  g('icnt').textContent = totalCurrent + (totalDropped > 0 ? ` issues · ⚠ ${totalDropped} perlu konfirmasi` : ' issues');
+  g('icnt').textContent = totalCurrent + ' issues';
   g('issues-proj-sel').innerHTML = '';
 
   const projKeys = Object.keys(grouped);
@@ -1893,7 +1899,7 @@ function rIssues(){
     'Material':'#14b8a6','Plumbing':'#0ea5e9','HVAC':'#10b981'
   };
 
-  function renderIssueItem(iss, badge){
+  function renderIssueItem(iss){
     const m = iss.match(/^\[([^\]]+)\]\s*(.*)/s);
     let katHtml = '', txt = iss;
     if(m){
@@ -1901,59 +1907,39 @@ function rIssues(){
       const clr = clrMap[kat]||'#94a3b8';
       katHtml = `<span class="ipg-kat" style="background:${clr}20;color:${clr};border:1px solid ${clr}40">${kat}</span>`;
     }
-    const badgeHtml = badge||'';
-    return `<div class="ipg-item">${katHtml}<span class="ipg-txt">${txt}</span>${badgeHtml}</div>`;
+    return `<div class="ipg-item">${katHtml}<span class="ipg-txt">${txt}</span></div>`;
   }
 
   c.innerHTML = projKeys.map(proj => {
     const d = grouped[proj];
     const pid = proj.replace(/\s/g,'_');
-    const totalShown = d.newIssues.length + d.ongoingIssues.length + d.droppedIssues.length;
-
-    // Render section: issue aktif minggu ini
     let issueHTML = '';
 
-    // Carry Over dari field GSheet (diisi SM, bukan auto-generate)
+    // Carry Over — isian SM dari form (field Carry Over)
     if(d.carryOver && d.carryOver.trim()){
       const coItems = d.carryOver.split(/[;\n]/).map(s=>s.trim()).filter(Boolean);
-      issueHTML += `<div style="font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);padding:4px 0 2px">🔄 Carry Over (Update dari SM)</div>`;
+      issueHTML += `<div style="font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);padding:4px 0 2px">🔄 Carry Over</div>`;
       issueHTML += coItems.map(co =>
         `<div class="ipg-item" style="border-left:2px solid var(--teal);padding-left:6px;margin-left:2px"><span class="ipg-txt" style="color:var(--t2)">${co}</span></div>`
       ).join('');
-      if(d.ongoingIssues.length || d.newIssues.length || d.droppedIssues.length){
-        issueHTML += `<div style="height:1px;background:var(--border);margin:5px 0"></div>`;
-      }
+      if(d.issues.length) issueHTML += `<div style="height:1px;background:var(--border);margin:5px 0"></div>`;
     }
 
-    if(d.ongoingIssues.length){
-      issueHTML += `<div style="font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--yellow);padding:4px 0 2px">🔄 Masih Open (dari W${d.prevMingguKe||'?'})</div>`;
-      issueHTML += d.ongoingIssues.map(i => renderIssueItem(i)).join('');
-    }
-    if(d.newIssues.length){
-      issueHTML += `<div style="font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);padding:4px 0 2px">🆕 Issue Baru W${d.mingguKe}</div>`;
-      issueHTML += d.newIssues.map(i => renderIssueItem(i)).join('');
-    }
-    if(d.droppedIssues.length){
-      issueHTML += `<div style="font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);padding:4px 0 2px;border-top:1px solid rgba(255,255,255,.06);margin-top:4px">⚠ Tidak Diinput Ulang — Perlu Konfirmasi SM</div>`;
-      issueHTML += d.droppedIssues.map(i =>
-        renderIssueItem(i,
-          `<span style="margin-left:auto;flex-shrink:0;font-size:7.5px;padding:1px 5px;border-radius:3px;background:rgba(245,158,11,0.12);color:var(--yellow);border:1px solid rgba(245,158,11,0.3)">Sudah selesai?</span>`
-        )
-      ).join('');
+    // Issue minggu ini
+    if(d.issues.length){
+      issueHTML += `<div style="font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);padding:4px 0 2px">🚨 Issue W${d.mingguKe}</div>`;
+      issueHTML += d.issues.map(i => renderIssueItem(i)).join('');
     }
 
     const wLabel = `<span style="font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace">W${d.mingguKe}</span>`;
-    const alertDot = d.droppedIssues.length
-      ? `<span style="width:6px;height:6px;border-radius:50%;background:var(--yellow);display:inline-block;margin-right:2px" title="${d.droppedIssues.length} issue perlu konfirmasi"></span>`
-      : '';
+    const totalShown = d.issues.length + (d.carryOver.trim() ? d.carryOver.split(/[;\n]/).filter(s=>s.trim()).length : 0);
 
     return `<div class="ipg">
       <div class="ipg-hd" onclick="toggleIssueDetail('${proj}')" style="cursor:pointer;user-select:none">
         <span class="ipg-proj">📍 ${proj}</span>
         <div style="display:flex;align-items:center;gap:5px">
           ${wLabel}
-          ${alertDot}
-          <span class="ipg-cnt">${totalShown} issue</span>
+          <span class="ipg-cnt">${totalShown} item</span>
           <span id="iss-arrow-${pid}" style="font-size:9px;color:var(--t3)">▶</span>
         </div>
       </div>
@@ -2315,6 +2301,20 @@ function renderPrefitout(){
       return { namaProject: d.namaProject, brand: d.brand, sm: d.sm, spkStart: d.spkStart, namaSM: d.sm };
     });
   }
+
+  // Sort by SPK Mulai ascending — yang paling dekat di atas
+  pfFiltered.sort(function(a, b){
+    var da = new Date(a['SPK Mulai']||'9999'); 
+    var db = new Date(b['SPK Mulai']||'9999');
+    return da - db;
+  });
+
+  // Sort unsubmittedPF juga by SPK Mulai ascending
+  unsubmittedPF.sort(function(a, b){
+    var da = new Date(a.spkStart||'9999');
+    var db = new Date(b.spkStart||'9999');
+    return da - db;
+  });
 
   if(lblSubmitted) lblSubmitted.style.display = pfFiltered.length ? 'block' : 'none';
   if(lblFollowup)  lblFollowup.style.display  = unsubmittedPF.length ? 'block' : 'none';
