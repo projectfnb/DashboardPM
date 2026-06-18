@@ -915,7 +915,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
 </div>
 
 <script>
-let GAS='', raw=[], fil=[];
+let GAS='', raw=[], fil=[], filAll=[];
 var DEFAULT_GAS='https://script.google.com/macros/s/AKfycbzP0ejKcJOBhVcXwLKRe2HnMWSf78i9iHt1CePYGzf-2p1UohF8iaKxPsYNNs3JNHZhRg/exec';
 let fBrand='ALL', fWeek='ALL', fSM='ALL', fPM='ALL', fKtr='ALL', fTipe='ALL', fSearch='';
 let expandedIdx=null;
@@ -923,6 +923,10 @@ let expandedIdx=null;
 const BCLS={'Chatime':'bt-c','Gindaco':'bt-g','Go Go Curry':'bt-gg','88Seoul':'bt-s','Molly Tea':'bt-m'};
 const BCOL={'Chatime':'#ff6961','Gindaco':'#60a5fa','Go Go Curry':'#fbbf24','88Seoul':'#c084fc','Molly Tea':'#2dd4bf'};
 const BRANDS=['Chatime','Gindaco','Go Go Curry','88Seoul','Molly Tea'];
+// Normalisasi nama brand: lowercase + buang spasi/simbol, agar data dari Sheet
+// yang penulisannya sedikit berbeda (spasi ekstra, beda kapital) tetap cocok
+// dengan daftar BRANDS di atas.
+const normBrand = s => (s||'').toString().toLowerCase().replace(/[^a-z0-9]/g,'');
 
 /* ─── DEMO DATA ─── */
 function demoData(){return[
@@ -1301,6 +1305,10 @@ function applyF() {
     }
   });
 
+  // Snapshot sebelum exclude proyek selesai — dipakai untuk widget Progress per Brand
+  // agar brand yang seluruh proyeknya sudah selesai/100% tetap tampil (bukan hilang)
+  filAll = fil.slice();
+
   // Project dengan status 'Selesai' ATAU aktual 100% tidak ditampilkan di tabel aktif
   fil = fil.filter(function(d){
     var statusSelesai = (d.status||'').toLowerCase() === 'selesai';
@@ -1531,11 +1539,11 @@ function rSL(){
   // Brand Progress Mini
   const bpEl=g('brandProgressList');
   if(bpEl){
-    const activeBrands=BRANDS.filter(b=>fil.find(d=>d.brand===b));
+    const activeBrands=BRANDS.filter(b=>filAll.find(d=>normBrand(d.brand)===normBrand(b)));
     if(!activeBrands.length){ bpEl.innerHTML='<div style="font-size:9px;color:var(--t3);padding:4px 2px">Tidak ada data</div>'; }
     else {
       bpEl.innerHTML=activeBrands.map(b=>{
-        const bProjs=fil.filter(d=>d.brand===b);
+        const bProjs=filAll.filter(d=>normBrand(d.brand)===normBrand(b));
         const avg=bProjs.length?Math.round(bProjs.reduce((s,d)=>s+d.aktual,0)/bProjs.length):0;
         const hasCr=bProjs.some(d=>d.status==='Critical Delay');
         const hasMn=bProjs.some(d=>d.status==='Minor Delay');
