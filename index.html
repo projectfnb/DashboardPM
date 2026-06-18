@@ -1326,8 +1326,15 @@ function rWeeklyAlert(){
   monday.setDate(today.getDate() - ((dow + 6) % 7));
   monday.setHours(0,0,0,0);
 
-  // Alert window: Senin s/d Selasa jam 15:00
-  // Setelah Selasa 15:00, banner hilang sampai Senin minggu depan
+  // Panel hanya tampil Minggu s/d Selasa. Rabu-Sabtu: panel disembunyikan total.
+  var isPanelWindow = (dow === 0 || dow === 1 || dow === 2);
+  if(!isPanelWindow){
+    var wrapHidden = document.getElementById('weekly-alert-wrap');
+    if(wrapHidden) wrapHidden.style.display = 'none';
+    return;
+  }
+
+  // Alert window (untuk styling urgent): Senin s/d Selasa jam 15:00
   var isAlertWindow = (dow === 1) || (dow === 2 && (today.getHours() < 15));
 
   // Countdown ke Selasa 15:00
