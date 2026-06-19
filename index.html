@@ -827,7 +827,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
       </div>
       <div class="card" style="flex:1.3;min-height:180px">
         <div class="chd"><div class="cht">🟢 Health Status</div></div>
-        <div class="donut-sect" style="flex:1;align-items:center">
+        <div class="donut-sect" style="align-items:center">
           <div class="dwrap">
             <svg class="dsvg" width="100" height="100" viewBox="0 0 80 80">
               <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="9"/>
@@ -844,6 +844,11 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
             <div class="dl"><div class="dll"><div class="dldot" style="background:var(--teal)"></div>Early Stage</div><div class="dlv" id="dle" style="color:var(--teal)">—</div></div>
           </div>
         </div>
+        <!-- PERGERAKAN MINGGU INI — pelengkap donut, fokus pada project yang BERUBAH status dibanding minggu lalu -->
+        <div id="hsMoveWrap" style="border-top:1px solid var(--border);padding:10px 13px 12px">
+          <div style="font-size:9.5px;text-transform:uppercase;font-weight:700;color:var(--t3);letter-spacing:.05em;margin-bottom:7px">📈 Pergerakan Minggu Ini <span style="text-transform:none;font-weight:500;opacity:.75">(vs minggu lalu)</span></div>
+          <div id="hsMoveList" style="display:flex;flex-direction:column;gap:7px"></div>
+        </div>
       </div>
     </div>
 
@@ -851,6 +856,17 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
     <div class="card">
       <div class="chd"><div class="cht">📉 Deviasi Progress vs Target per Project</div></div>
       <div class="devwrap" id="devbars"><div class="empty">—</div></div>
+    </div>
+
+    <!-- Kurva S: Aktual vs Rencana per Project -->
+    <div class="card">
+      <div class="chd">
+        <div class="cht">📈 Kurva S — Aktual vs Rencana</div>
+        <select class="fsel" id="scurveSel" onchange="renderSCurve(this.value)" style="max-width:190px;min-width:120px"></select>
+      </div>
+      <div id="scurveChart"><div class="empty">Memuat…</div></div>
+      <div id="scurveLegend" style="display:flex;gap:14px;justify-content:center;margin-top:4px;font-size:9px;color:var(--t3)"></div>
+      <div id="scurveNote" style="font-size:8.5px;color:var(--t3);text-align:center;margin-top:4px"></div>
     </div>
 
     <!-- Right sidebar stats — ditambahkan ke bawah di center jika layar kecil, tapi secara default .sr tetap ada -->
@@ -927,6 +943,27 @@ const BRANDS=['Chatime','Gindaco','Go Go Curry','88Seoul','Molly Tea'];
 // yang penulisannya sedikit berbeda (spasi ekstra, beda kapital) tetap cocok
 // dengan daftar BRANDS di atas.
 const normBrand = s => (s||'').toString().toLowerCase().replace(/[^a-z0-9]/g,'');
+
+// ── KURVA TARGET MINGGUAN (sumber: Weekly Report SM — sudah berbentuk S asli,
+//    bukan linear) — dipakai untuk garis "Rencana" di Kurva S ──
+var WEEK_TARGETS_BY_BRAND = {
+  chatime:   {1:15, 2:43, 3:72, 4:100},
+  gindaco:   {1:13, 2:35, 3:57, 4:79, 5:100},
+  gogocurry: {1:13, 2:35, 3:57, 4:79, 5:100},
+  '88seoul': {1:13, 2:35, 3:57, 4:79, 5:100},
+  mollytea:  {1:13, 2:35, 3:57, 4:79, 5:100},
+};
+var MAX_WEEKS_BY_BRAND = {chatime:4, gindaco:5, gogocurry:5, '88seoul':5, mollytea:5};
+function getWeekTargetsFor(brand, tipeProject){
+  if(tipeProject==='Touch Up'||tipeProject==='Bongkaran Bare') return {1:50,2:100};
+  if(tipeProject==='Touch Up + Hotdak') return {1:33,2:66,3:100};
+  return WEEK_TARGETS_BY_BRAND[normBrand(brand)] || WEEK_TARGETS_BY_BRAND.gindaco;
+}
+function getMaxWeeksFor(brand, tipeProject){
+  if(tipeProject==='Touch Up'||tipeProject==='Bongkaran Bare') return 2;
+  if(tipeProject==='Touch Up + Hotdak') return 3;
+  return MAX_WEEKS_BY_BRAND[normBrand(brand)] || 5;
+}
 
 /* ─── DEMO DATA ─── */
 function demoData(){return[
@@ -1321,7 +1358,7 @@ function applyF() {
   renderAll();
 }
 function renderAll(){
-  rSL(); rDeadlineAlert(); rWeeklyAlert(); rKPI(); rTable(); rIssues(); rDonut(); rDev(); rSR(); rAlert(); rSummary();
+  rSL(); rDeadlineAlert(); rWeeklyAlert(); rKPI(); rTable(); rIssues(); rDonut(); rHsMove(); rDev(); rSCurveOptions(); rSR(); rAlert(); rSummary();
 }
 
 /* ─── WEEKLY SUBMISSION ALERT ─── */
@@ -1985,6 +2022,63 @@ function arc(id,p,c,off){
   el.setAttribute('stroke-dashoffset',-off);
 }
 
+/* ─── PERGERAKAN MINGGU INI (Health Status) ───
+   Bandingkan status tiap project di fil (minggu terbaru, sudah kena filter aktif)
+   terhadap status project yang sama di minggu sebelumnya (dari raw, sebelum di-"latest only"-kan).
+   Tujuannya beda dari Status Alert/Ringkasan Eksekutif: yang ditampilkan bukan "siapa yang
+   Critical sekarang", tapi "siapa yang baru pindah status dibanding minggu lalu". */
+function rHsMove(){
+  const wrap=g('hsMoveList');
+  if(!wrap) return;
+  const norm = s => (s||'').toString().trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+
+  const moves=[]; // {project, from, to}
+  fil.forEach(d=>{
+    const wk=Number(d.mingguKe)||0;
+    if(wk<=0) return; // tidak ada info minggu, skip
+    const key=norm(d.namaProject);
+    // Cari data project yang sama pada minggu sebelumnya (wk-1) di raw
+    const prevRows=raw.filter(r=>norm(r.namaProject)===key && Number(r.mingguKe)===wk-1);
+    if(!prevRows.length) return; // project baru / belum ada histori minggu lalu → skip, bukan dianggap "naik dari kosong"
+    const prevStatus=(prevRows[0].status||'').trim();
+    const curStatus=(d.status||'').trim();
+    if(!prevStatus || !curStatus) return;
+    if(prevStatus===curStatus) return; // tidak ada perubahan
+    moves.push({project:d.namaProject, from:prevStatus, to:curStatus});
+  });
+
+  if(!moves.length){
+    wrap.innerHTML='<div style="font-size:9.5px;color:var(--t3)">Tidak ada perubahan status dari minggu lalu ✓</div>';
+    return;
+  }
+
+  // Urutan tingkat "keparahan" untuk styling & supaya Critical selalu muncul lebih dulu
+  const ORDER=['Critical Delay','Minor Delay','On Track','Early Stage'];
+  const ICON={'Critical Delay':'🔴','Minor Delay':'⚠','On Track':'✅','Early Stage':'🔵'};
+  const COLOR={'Critical Delay':'var(--red)','Minor Delay':'var(--yellow)','On Track':'var(--green)','Early Stage':'var(--teal)'};
+  const SEVERITY={'Critical Delay':3,'Minor Delay':2,'On Track':0,'Early Stage':0};
+
+  // Kelompokkan berdasarkan status TUJUAN (to), karena itu yang paling relevan ditindaklanjuti
+  const groups={};
+  moves.forEach(m=>{
+    if(!groups[m.to]) groups[m.to]=[];
+    groups[m.to].push(m);
+  });
+
+  const toKeys=Object.keys(groups).sort((a,b)=>(ORDER.indexOf(a)===-1?99:ORDER.indexOf(a))-(ORDER.indexOf(b)===-1?99:ORDER.indexOf(b)));
+
+  wrap.innerHTML=toKeys.map(to=>{
+    const items=groups[to];
+    const fromOlder=items.some(m=>(SEVERITY[m.from]||0) < (SEVERITY[to]||0)); // ada yg memburuk
+    const arrow = (SEVERITY[to]||0) > 0 ? '▲' : (to==='On Track'?'✅':'▼');
+    const names=items.map(m=>m.project).join(', ');
+    return `<div>
+      <div style="font-size:10px;font-weight:700;color:${COLOR[to]||'var(--t2)'}">${arrow} ${items.length} project pindah ke ${ICON[to]||''} ${to}</div>
+      <div style="font-size:9px;color:var(--t3);margin-top:2px;line-height:1.4">${names}</div>
+    </div>`;
+  }).join('');
+}
+
 /* ─── DEVIATION CHART ─── */
 function rDev(){
   const c=g('devbars');
@@ -2000,6 +2094,173 @@ function rDev(){
       <div class="devbar ${isP?'dpos':'dneg'}" style="width:${bw}%;background:${clr}"></div></div>
       <div class="devval" style="color:${clr}">${sign}${dev}%</div></div>`;
   }).join('');
+}
+
+/* ─── KURVA S: Aktual vs Rencana per Project ───
+   Rencana = garis linear 0% di SPK Mulai → 100% di Target Opening (durasi waktu),
+   belum memperhitungkan bobot per fase kerja karena data fase/tanggal per fase
+   tidak tersedia di sumber data dashboard ini. */
+var scurveProject = null;
+
+function rSCurveOptions(){
+  var sel = g('scurveSel');
+  if(!sel) return;
+  var names = [...new Set(fil.map(d=>d.namaProject).filter(n=>n && n!=='—'))].sort();
+  var prev = scurveProject;
+  sel.innerHTML = names.map(n=>'<option value="'+n.replace(/"/g,'&quot;')+'">'+n+'</option>').join('');
+  if(!names.length){ scurveProject=null; renderSCurve(null); return; }
+  scurveProject = (prev && names.indexOf(prev)>-1) ? prev : names[0];
+  sel.value = scurveProject;
+  renderSCurve(scurveProject);
+}
+
+function renderSCurve(projectName){
+  scurveProject = projectName;
+  var box = g('scurveChart'), leg = g('scurveLegend'), note = g('scurveNote');
+  if(!box) return;
+  if(!projectName){
+    box.innerHTML = '<div class="empty">Tidak ada project aktif</div>';
+    if(leg) leg.innerHTML=''; if(note) note.textContent='';
+    return;
+  }
+
+  var meta = fil.find(function(d){return d.namaProject===projectName;})
+          || raw.find(function(d){return d.namaProject===projectName;}) || {};
+  var hist = raw.filter(function(d){return d.namaProject===projectName;})
+                .sort(function(a,b){return a.mingguKe-b.mingguKe;});
+
+  var spkStart       = meta.spkStart;
+  var spkEndRaw      = meta.spkEnd || meta.targetOpening;     // ujung kurva S (akhir fisik pekerjaan)
+  var openingRaw     = meta.targetOpening || meta.spkEnd;     // ujung sumbu waktu (opening)
+
+  if(!spkStart || !spkEndRaw){
+    box.innerHTML = '<div class="empty">Tanggal SPK Mulai / SPK Selesai belum lengkap untuk project ini</div>';
+    if(leg) leg.innerHTML=''; if(note) note.textContent='';
+    return;
+  }
+
+  var dStart = new Date(spkStart), dSpkEnd = new Date(spkEndRaw), dOpening = new Date(openingRaw);
+  if(isNaN(dStart.getTime()) || isNaN(dSpkEnd.getTime()) || dSpkEnd.getTime() <= dStart.getTime()){
+    box.innerHTML = '<div class="empty">Range tanggal tidak valid (SPK Selesai ≤ SPK Mulai)</div>';
+    if(leg) leg.innerHTML=''; if(note) note.textContent='';
+    return;
+  }
+  if(isNaN(dOpening.getTime()) || dOpening.getTime() < dSpkEnd.getTime()) dOpening = dSpkEnd;
+
+  // Titik aktual: tanggal didekati dari SPK Mulai + mingguKe minggu (akhir minggu ke-N)
+  var actualPts = [{x:dStart, y:0}].concat(hist.map(function(d){
+    var wk = Math.max(parseF(d.mingguKe),1);
+    var dt = new Date(dStart.getTime() + wk*7*86400000);
+    return {x:dt, y:Math.max(0,Math.min(100, parseF(d.aktual))), wk:d.mingguKe};
+  }));
+
+  // Titik referensi target mingguan asli (sumber: Weekly Report SM) — ditampilkan sebagai titik saja,
+  // TIDAK dijadikan garis (karena kenaikannya nyaris rata/linear per minggu, bukan S)
+  var weekTargets = getWeekTargetsFor(meta.brand, meta.tipeProject);
+  var maxWeeks    = getMaxWeeksFor(meta.brand, meta.tipeProject);
+  var usedFallback = !WEEK_TARGETS_BY_BRAND[normBrand(meta.brand)] &&
+                      meta.tipeProject!=='Touch Up' && meta.tipeProject!=='Touch Up + Hotdak' && meta.tipeProject!=='Bongkaran Bare';
+  var planRefDots = [];
+  for(var w=1; w<=maxWeeks; w++){
+    if(weekTargets[w]===undefined) continue;
+    planRefDots.push({x:new Date(dStart.getTime() + w*7*86400000), y:weekTargets[w], wk:w});
+  }
+
+  // Garis rencana = kurva-S matematis (smoothstep) dari SPK Mulai (0%) → SPK Selesai (100%),
+  // lalu flat 100% dari SPK Selesai sampai Target Opening.
+  var SCURVE_STEPS = 30;
+  var planPts = [];
+  for(var i=0;i<=SCURVE_STEPS;i++){
+    var t = i/SCURVE_STEPS;
+    var dt = new Date(dStart.getTime() + t*(dSpkEnd.getTime()-dStart.getTime()));
+    var y  = 100*(3*t*t - 2*t*t*t); // smoothstep: lambat-cepat-lambat
+    planPts.push({x:dt, y:y});
+  }
+  if(dOpening.getTime() > dSpkEnd.getTime()) planPts.push({x:dOpening, y:100});
+
+  var tMin = dStart.getTime();
+  var lastActualT = actualPts[actualPts.length-1].x.getTime();
+  var tMax = Math.max(dOpening.getTime(), lastActualT, dSpkEnd.getTime());
+
+  var W=560,H=210,PL=32,PR=12,PT=14,PB=24;
+  var iw=W-PL-PR, ih=H-PT-PB;
+  function xPix(t){ return PL + (t-tMin)/((tMax-tMin)||1)*iw; }
+  function yPix(v){ return PT + (1-(v/100))*ih; }
+  function pathOf(pts){
+    return pts.map(function(p,i){
+      return (i===0?'M':'L')+xPix(p.x.getTime()).toFixed(1)+','+yPix(p.y).toFixed(1);
+    }).join(' ');
+  }
+  // Interpolasi smoothstep antar titik berurutan (x linear waktu, y diease 3t²-2t³)
+  // supaya garis Aktual juga melengkung halus, bukan segmen lurus patah-patah.
+  function smoothInterp(pts, stepsPerSeg){
+    if(pts.length<2) return pts.slice();
+    var out=[pts[0]];
+    for(var i=0;i<pts.length-1;i++){
+      var p0=pts[i], p1=pts[i+1];
+      for(var s=1;s<=stepsPerSeg;s++){
+        var t=s/stepsPerSeg;
+        var te=3*t*t-2*t*t*t;
+        out.push({
+          x:new Date(p0.x.getTime()+(p1.x.getTime()-p0.x.getTime())*t),
+          y:p0.y+(p1.y-p0.y)*te
+        });
+      }
+    }
+    return out;
+  }
+
+  var gridLines = [0,25,50,75,100].map(function(v){
+    var y=yPix(v).toFixed(1);
+    return '<line x1="'+PL+'" y1="'+y+'" x2="'+(W-PR)+'" y2="'+y+'" stroke="var(--border)" stroke-width="1"/>'
+         + '<text x="'+(PL-6)+'" y="'+(+y+3)+'" font-size="8" fill="var(--t3)" text-anchor="end">'+v+'%</text>';
+  }).join('');
+
+  var xLabelsSvg =
+      '<text x="'+PL+'" y="'+(H-7)+'" font-size="8" fill="var(--t3)" text-anchor="start">'+(fmtD(spkStart)||'')+'</text>'
+    + '<text x="'+(W-PR)+'" y="'+(H-7)+'" font-size="8" fill="var(--t3)" text-anchor="end">'+(fmtD(openingRaw)||'')+'</text>';
+
+  var spkEndLine = '';
+  if(dOpening.getTime() > dSpkEnd.getTime()){
+    var sx = xPix(dSpkEnd.getTime()).toFixed(1);
+    spkEndLine = '<line x1="'+sx+'" y1="'+PT+'" x2="'+sx+'" y2="'+(H-PB)+'" stroke="var(--t3)" stroke-width="1" stroke-dasharray="2,3" opacity=".6"/>'
+               + '<text x="'+sx+'" y="'+(H-7)+'" font-size="7.5" fill="var(--t3)" text-anchor="middle">SPK Selesai</text>';
+  }
+
+  var todayT = Date.now(), todayLine = '';
+  if(todayT >= tMin && todayT <= tMax){
+    var tx = xPix(todayT).toFixed(1);
+    todayLine = '<line x1="'+tx+'" y1="'+PT+'" x2="'+tx+'" y2="'+(H-PB)+'" stroke="var(--orange)" stroke-width="1" stroke-dasharray="3,3"/>'
+              + '<text x="'+tx+'" y="'+(PT-3)+'" font-size="7.5" fill="var(--orange)" text-anchor="middle">Hari ini</text>';
+  }
+
+  var planPath = pathOf(planPts);
+  var actualPath = actualPts.length>1 ? pathOf(smoothInterp(actualPts, 10)) : '';
+  var actualDots = actualPts.filter(function(p){return p.wk!==undefined;}).map(function(p){
+    return '<circle cx="'+xPix(p.x.getTime()).toFixed(1)+'" cy="'+yPix(p.y).toFixed(1)+'" r="2.6" fill="var(--green)"><title>Aktual W'+p.wk+': '+p.y+'%</title></circle>';
+  }).join('');
+  var planDots = planRefDots.map(function(p){
+    return '<circle cx="'+xPix(p.x.getTime()).toFixed(1)+'" cy="'+yPix(p.y).toFixed(1)+'" r="2.2" fill="var(--bg2)" stroke="var(--t3)" stroke-width="1.3"><title>Checkpoint Target W'+p.wk+': '+p.y+'%</title></circle>';
+  }).join('');
+
+  box.innerHTML = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block">'
+    + gridLines
+    + spkEndLine
+    + '<path d="'+planPath+'" fill="none" stroke="var(--t3)" stroke-width="1.6" stroke-dasharray="5,4"/>'
+    + planDots
+    + (actualPath ? '<path d="'+actualPath+'" fill="none" stroke="var(--green)" stroke-width="2"/>' : '')
+    + actualDots
+    + todayLine
+    + xLabelsSvg
+    + '</svg>';
+
+  if(leg) leg.innerHTML =
+      '<span><span style="display:inline-block;width:10px;height:2px;border-top:2px dashed var(--t3);margin-right:4px;vertical-align:middle"></span>Rencana (Kurva S)</span>'
+    + '<span><span style="display:inline-block;width:10px;height:2px;background:var(--green);margin-right:4px;vertical-align:middle"></span>Aktual</span>'
+    + '<span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--bg2);border:1.3px solid var(--t3);margin-right:4px;vertical-align:middle"></span>Checkpoint Mingguan</span>';
+
+  if(note) note.textContent = (usedFallback ? 'Checkpoint pakai tabel default Gindaco (brand "'+(meta.brand||'—')+'" tidak dikenali). ' : '')
+    + 'Rencana = kurva-S (smoothstep) SPK Mulai→SPK Selesai, lalu flat 100% sampai Target Opening.';
 }
 
 /* ─── RIGHT SIDEBAR ─── */
