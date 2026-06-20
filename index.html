@@ -1077,6 +1077,10 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(!localStorage.getItem('pm26')) localStorage.setItem('pm26',GAS);
   setTimeout(()=>{ GAS?fetchGAS():(hideLoad(),showSettings()); },600);
 
+  // Auto-refresh data dari GAS tiap 5 menit (silent, tanpa loading overlay)
+  // supaya status "Sudah/Belum Submit" otomatis update tanpa perlu reload manual.
+  setInterval(function(){ if(GAS) fetchGAS(); }, 5*60*1000);
+
   /* Row click delegation */
   const tb=document.getElementById('tbody');
   function handleRowTap(e){
@@ -1366,9 +1370,17 @@ function rWeeklyAlert(){
   var today = new Date();
   var dow   = today.getDay(); // 0=Min,1=Sen,...,6=Sab
 
-  // Senin minggu ini jam 00:00
+  // Senin yang relevan untuk siklus submit "Minggu Ini".
+  // Senin & Selasa: Senin minggu ini sudah lewat/sedang berjalan -> pakai itu.
+  // Minggu: siklus Senin-Selasa minggu lalu SUDAH TUTUP (closed) -> jangan pakai Senin
+  //   yang sudah lewat (data submit lama bisa ikut terhitung "sudah submit" untuk
+  //   siklus baru yang belum dibuka). Anchor ke Senin BESOK (siklus baru, belum mulai).
   var monday = new Date(today);
-  monday.setDate(today.getDate() - ((dow + 6) % 7));
+  if(dow === 0){
+    monday.setDate(today.getDate() + 1); // Senin besok
+  } else {
+    monday.setDate(today.getDate() - ((dow + 6) % 7)); // Senin minggu ini
+  }
   monday.setHours(0,0,0,0);
 
   // Panel hanya tampil Minggu s/d Selasa. Rabu-Sabtu: panel disembunyikan total.
@@ -1485,10 +1497,12 @@ function rWeeklyAlert(){
   });
   notSubmitted.sort(function(a,b){ return a.sm.localeCompare(b.sm); });
 
+  // Sudah submit: SM masuk list ini kalau ADA MINIMAL 1 project aktifnya yang sudah submit
+  // minggu ini — walaupun project lain miliknya belum (SM bisa muncul di 2 panel sekaligus).
   var alreadyDone = Object.keys(smProjects).filter(function(sm){
     var allKeys = Object.keys(smProjects[sm].projects);
     if(!allKeys.length) return false;
-    return allKeys.every(function(nk){ return smProjects[sm].submittedProjects[nk]; });
+    return allKeys.some(function(nk){ return smProjects[sm].submittedProjects[nk]; });
   });
   alreadyDone.sort(function(a,b){ return a.localeCompare(b); });
   var smWrap   = document.getElementById('weekly-alert-sm');
