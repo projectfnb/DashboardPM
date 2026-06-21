@@ -339,7 +339,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
 /* DEV CHART */
 .devwrap{padding:11px 12px;display:flex;flex-direction:column;gap:6px;}
 .devrow{display:flex;align-items:center;gap:6px;}
-.devlbl{width:110px;font-size:8.5px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;}
+.devlbl{width:118px;font-size:8.5px;color:var(--t2);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex-shrink:0;}
 .devcont{flex:1;height:12px;position:relative;display:flex;align-items:center;}
 .devctr{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.1);}
 .devbar{height:7px;border-radius:3px;position:absolute;}
@@ -559,7 +559,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
 .pf-card-header{padding:7px 9px 6px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:7px}
 .pf-card-brand{width:4px;border-radius:2px;flex-shrink:0;align-self:stretch}
 .pf-card-info{flex:1;min-width:0}
-.pf-card-name{font-size:9.5px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-card-name{font-size:9.5px;font-weight:700;color:var(--t1);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pf-card-meta{font-size:8px;color:var(--t3);margin-top:1px}
 .pf-card-alert{flex-shrink:0}
 .pf-card-body{padding:6px 9px 8px}
@@ -767,6 +767,17 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
           </div>
         </div>
         <div id="weekly-alert-zero-list" style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <!-- Project aktif tanpa Nama SM — data belum lengkap, tidak bisa ditagih per-SM -->
+      <div id="weekly-alert-nosm" style="display:none;border-radius:10px;overflow:hidden;margin-top:8px;border:1.5px solid var(--orange);background:linear-gradient(135deg,rgba(251,146,60,.10),rgba(251,146,60,.04))">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(251,146,60,.2)">
+          <span style="font-size:18px">❓</span>
+          <div>
+            <div style="font-size:12px;font-weight:800;color:var(--orange)">Project Tanpa Nama SM</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:1px">Data belum lengkap — tidak bisa ditagih submission-nya</div>
+          </div>
+        </div>
+        <div id="weekly-alert-nosm-list" style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px"></div>
       </div>
     </div>
 
@@ -1413,19 +1424,24 @@ function rWeeklyAlert(){
 
   // smProjects: { smName → { projects: {namaProject: bool}, submittedProjects: {namaProject: tsDate}, latestTs: {} } }
   var smProjects = {};
+  var noSmProjects = []; // project aktif tapi nama SM kosong/strip — dicatat terpisah, jangan hilang diam-diam
 
   // Normalisasi nama project untuk perbandingan (lowercase, hapus spasi berlebih)
   function normProj(s){ return (s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
 
   // Kumpulkan semua project aktif per SM — key pakai normProj
+  // Definisi "aktif" disamakan dengan applyF(): project TANPA SPK Mulai tetap dianggap aktif.
   raw.forEach(function(d){
     if(!d.namaProject || d.namaProject==='—') return;
-    if(!d.sm || d.sm==='—') return;
     var spkMulai = d.spkStart ? new Date(d.spkStart) : null;
     if(spkMulai) spkMulai.setHours(0,0,0,0);
-    var isAktif = spkMulai && spkMulai <= today2; // harus ada SPK Mulai dan sudah lewat
+    var isAktif = !spkMulai || spkMulai <= today2;
     if(!isAktif) return;
     if((d.aktual || 0) >= 100) return; // project 100% tidak perlu ditagih submit
+    if(!d.sm || d.sm==='—'){
+      if(noSmProjects.indexOf(d.namaProject)===-1) noSmProjects.push(d.namaProject);
+      return; // tidak bisa dikelompokkan per SM, jangan masuk smProjects
+    }
     if(!smProjects[d.sm]) smProjects[d.sm] = { projects:{}, submittedProjects:{}, latestTs:{}, displayNames:{} };
     var nk = normProj(d.namaProject);
     smProjects[d.sm].projects[nk] = true;
@@ -1511,6 +1527,16 @@ function rWeeklyAlert(){
   var doneList = document.getElementById('weekly-alert-done-list');
   var zWrap    = document.getElementById('weekly-alert-zero');
   if(zWrap) zWrap.style.display='none';
+  var noSmWrap = document.getElementById('weekly-alert-nosm');
+  var noSmList = document.getElementById('weekly-alert-nosm-list');
+  if(noSmProjects.length){
+    if(noSmWrap) noSmWrap.style.display='block';
+    if(noSmList) noSmList.innerHTML = noSmProjects.map(function(pr){
+      return '<div class="wa-sm-tag" style="border-color:rgba(251,146,60,.4)"><span style="font-size:9px;font-weight:700;color:var(--orange)">📌 '+pr+'</span></div>';
+    }).join('');
+  } else {
+    if(noSmWrap) noSmWrap.style.display='none';
+  }
 
   var anyAlert = false;
 
@@ -1567,7 +1593,7 @@ function rWeeklyAlert(){
   }
 
   var wrap = document.getElementById('weekly-alert-wrap');
-  if(wrap) wrap.style.display = (notSubmitted.length || alreadyDone.length) ? 'block' : 'none';
+  if(wrap) wrap.style.display = (notSubmitted.length || alreadyDone.length || noSmProjects.length) ? 'block' : 'none';
 }
 
 /* ─── LEFT SIDEBAR (status alert only, SM sudah jadi dropdown) ─── */
@@ -1634,7 +1660,7 @@ function rSL(){
 function rKPI(){
   const t=fil.length, on=fil.filter(d=>d.status==='On Track'||d.status==='Early Stage').length;
   const mn=fil.filter(d=>d.status==='Minor Delay').length, cr=fil.filter(d=>d.status==='Critical Delay').length;
-  g('kt').textContent=t; g('kts').textContent=BRANDS.filter(b=>fil.find(d=>d.brand===b)).length+' brand aktif'; g('ktt').textContent=t+' proj';
+  g('kt').textContent=t; g('kts').textContent=BRANDS.filter(b=>fil.find(d=>normBrand(d.brand)===normBrand(b))).length+' brand aktif'; g('ktt').textContent=t+' proj';
   g('ko').textContent=on; g('kos').textContent=t?Math.round(on/t*100)+'% dari total':'—'; g('kot').textContent=t?'+'+Math.round(on/t*100)+'%':'—';
   g('km').textContent=mn; g('kms').textContent=t?Math.round(mn/t*100)+'% dari total':'—'; g('kmt').textContent=mn?mn+' proj':'0';
   g('kc').textContent=cr; g('kcs').textContent=t?Math.round(cr/t*100)+'% dari total':'—'; g('kct').textContent=cr?'⚠ '+cr:'✓ 0';
@@ -1720,6 +1746,24 @@ function disiplinRow(d, colspan){
     if(!disp || disp==='—' || disp==='') return `<span class="exp-meta-val na">—</span>`;
     return `<span class="exp-meta-val${extraCls?' '+extraCls:''}">${disp}</span>`;
   }
+  /* Render teks multi-item (dipisah ; atau baris baru) jadi list rapi per baris,
+     dipakai untuk Rencana Kerja & Carry Over yang sering isinya beberapa poin.
+     Untuk Carry Over, item berformat "[✓] Teks" dirender sebagai checkbox selesai/belum. */
+  function metaList(v, isCarryOver){
+    if(!v || !v.trim() || v.trim()==='—') return `<div class="exp-meta-val na" style="text-align:left;width:100%">—</div>`;
+    const items=v.split(/[;\n]|(?=\d+\.\s)/).map(s=>s.trim().replace(/^\d+\.\s*/,'')).filter(Boolean);
+    if(items.length<=1 && !isCarryOver) return `<div class="exp-meta-val" style="text-align:left;width:100%;white-space:normal">${items[0]||v}</div>`;
+    return `<div style="display:flex;flex-direction:column;gap:3px;width:100%">`+
+      items.map(it=>{
+        if(isCarryOver){
+          const done = /^\[✓\]\s*/.test(it);
+          const txt = it.replace(/^\[✓\]\s*/,'');
+          return `<div style="font-size:8.5px;line-height:1.4;padding-left:14px;position:relative;${done?'color:var(--t3);text-decoration:line-through':'color:var(--t1)'}"><span style="position:absolute;left:0">${done?'✅':'⬜'}</span>${txt}</div>`;
+        }
+        return `<div style="font-size:8.5px;color:var(--t1);line-height:1.4;padding-left:11px;position:relative"><span style="position:absolute;left:1px;color:var(--teal)">•</span>${it}</div>`;
+      }).join('')+
+    `</div>`;
+  }
   /* Eskalasi badge */
   const eskYa = (d.eskalasi||'').toLowerCase()==='ya'||(d.eskalasi||'').toLowerCase()==='yes';
   const eskVal = eskYa
@@ -1729,9 +1773,15 @@ function disiplinRow(d, colspan){
   const eskKetHtml = eskKet
     ? `<div class="exp-meta-ket">📌 ${eskKet}</div>` : '';
 
-  /* Tipe project yang tidak punya HVAC */
-  const NO_HVAC_TIPES=['Touch Up','Touch Up + Hotdak','Bongkaran Bare'];
-  const hvacNA = NO_HVAC_TIPES.includes(d.tipeProject) || (NO_HVAC_TIPES.length>0 && d.hvac===0 && NO_HVAC_TIPES.includes(d.tipeProject));
+  /* Disiplin yang TIDAK punya item kerja sendiri per tipe project — tampilkan N/A,
+     bukan 0%, karena 0% pada tipe ini bukan berarti "belum progress" tapi
+     "memang tidak ada item kerja di kategori ini" (sumber: Weekly Report SM). */
+  const NA_DISIPLIN_BY_TIPE = {
+    'Touch Up':           ['me','plumbing','hvac'],
+    'Touch Up + Hotdak':  ['me','plumbing','hvac'],
+    'Bongkaran Bare':     ['me','plumbing','hvac','fixture'],
+  };
+  const naList = NA_DISIPLIN_BY_TIPE[d.tipeProject] || [];
   const tipeTag = d.tipeProject ? `<span style="font-size:8px;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(20,184,166,0.15);color:var(--teal);margin-left:6px">${d.tipeProject}</span>` : '';
   const reportBtn=(d.fileUrl&&d.fileUrl.startsWith('http'))
     ?`<a href="${d.fileUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:var(--blue);color:#fff;font-size:9px;font-weight:700;text-decoration:none;margin-left:auto;flex-shrink:0">📄 Buka Laporan</a>`
@@ -1746,12 +1796,12 @@ function disiplinRow(d, colspan){
         <div class="dis-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">📐 6 Disiplin Pekerjaan — ${d.namaProject}${tipeTag}${reportBtn}</div>
         ${noReportNote}
         <div class="dis-grid">
-          ${disBar(d.persiapan,'🔧 Persiapan')}
-          ${disBar(d.sipil,'🏗 Sipil & Arsitektur')}
-          ${disBar(d.me,'⚡ ME (Elektrikal & Fire)')}
-          ${disBar(d.plumbing,'🚿 Plumbing & Gas')}
-          ${disBar(d.hvac,'❄ HVAC', NO_HVAC_TIPES.includes(d.tipeProject))}
-          ${disBar(d.fixture,'🪑 Furniture & Fixture')}
+          ${disBar(d.persiapan,'🔧 Persiapan', naList.includes('persiapan'))}
+          ${disBar(d.sipil,'🏗 Sipil & Arsitektur', naList.includes('sipil'))}
+          ${disBar(d.me,'⚡ ME (Elektrikal & Fire)', naList.includes('me'))}
+          ${disBar(d.plumbing,'🚿 Plumbing & Gas', naList.includes('plumbing'))}
+          ${disBar(d.hvac,'❄ HVAC', naList.includes('hvac'))}
+          ${disBar(d.fixture,'🪑 Furniture & Fixture', naList.includes('fixture'))}
         </div>
 
         <!-- ── Detail Info: Timeline & Action ── -->
@@ -1800,13 +1850,13 @@ function disiplinRow(d, colspan){
                 <span class="exp-meta-key">Tipe Project</span>
                 ${d.tipeProject ? `<span class="exp-meta-val" style="color:var(--teal)">${d.tipeProject}</span>` : '<span class="exp-meta-val na">—</span>'}
               </div>
-              <div class="exp-meta-row">
+              <div class="exp-meta-row" style="flex-direction:column;align-items:flex-start;gap:3px">
                 <span class="exp-meta-key">Rencana Kerja</span>
-                ${metaVal(d.rencana)}
+                ${metaList(d.rencana)}
               </div>
-              <div class="exp-meta-row">
+              <div class="exp-meta-row" style="flex-direction:column;align-items:flex-start;gap:3px">
                 <span class="exp-meta-key">Carry Over</span>
-                ${metaVal(d.carryOver)}
+                ${metaList(d.carryOver, true)}
               </div>
               <div class="exp-meta-row">
                 <span class="exp-meta-key">Eskalasi</span>
@@ -2102,7 +2152,7 @@ function rDev(){
     const dev=parseF(d.deviasi||(d.aktual-d.target)); const isP=dev>=0;
     const clr=dev>=0?'var(--green)':dev>=-5?'var(--yellow)':'var(--red)';
     const bw=Math.min(Math.abs(dev)*3.5,48); const sign=dev>=0?'+':'';
-    const lbl=(d.namaProject||'').substring(0,22);
+    const lbl=d.namaProject||'';
     return `<div class="devrow"><div class="devlbl" title="${d.namaProject||''}">${lbl}</div>
       <div class="devcont"><div class="devctr"></div>
       <div class="devbar ${isP?'dpos':'dneg'}" style="width:${bw}%;background:${clr}"></div></div>
@@ -2232,13 +2282,13 @@ function renderSCurve(projectName){
 
   var xLabelsSvg =
       '<text x="'+PL+'" y="'+(H-7)+'" font-size="8" fill="var(--t3)" text-anchor="start">'+(fmtD(spkStart)||'')+'</text>'
-    + '<text x="'+(W-PR)+'" y="'+(H-7)+'" font-size="8" fill="var(--t3)" text-anchor="end">'+(fmtD(openingRaw)||'')+'</text>';
+    + '<text x="'+(W-PR)+'" y="'+(H-7)+'" font-size="6.5" fill="var(--t3)" text-anchor="end" opacity=".8">opening</text>';
 
   var spkEndLine = '';
   if(dOpening.getTime() > dSpkEnd.getTime()){
     var sx = xPix(dSpkEnd.getTime()).toFixed(1);
     spkEndLine = '<line x1="'+sx+'" y1="'+PT+'" x2="'+sx+'" y2="'+(H-PB)+'" stroke="var(--t3)" stroke-width="1" stroke-dasharray="2,3" opacity=".6"/>'
-               + '<text x="'+sx+'" y="'+(H-7)+'" font-size="7.5" fill="var(--t3)" text-anchor="middle">SPK Selesai</text>';
+               + '<text x="'+sx+'" y="'+(H-7)+'" font-size="7.5" fill="var(--t3)" text-anchor="middle">'+(fmtD(spkEndRaw)||'')+'</text>';
   }
 
   var todayT = Date.now(), todayLine = '';
@@ -2431,13 +2481,12 @@ function rSummary(){
     <div class="sum-stat"><div class="sum-stat-val" style="color:var(--orange)">${is}</div><div class="sum-stat-lbl">Open Issues</div></div>
   </div>
   <p class="sum-para">
-    Per <b>${fmtT(new Date())}</b>, terdapat total <b>${t} project aktif</b> di <b>${brands.length} brand FnB</b>
-    (${brands.join(', ')}), dikelola oleh PM: <b>${pms.map(p=>p+' ('+fil.filter(d=>d.namaPM===p).length+' project)').join(', ')}</b>.
-    Rata-rata progress: <b>${avg}%</b>.
-    <b class="green">${on} project (${onPct}%)</b> On Track,
-    <b class="yellow">${mn} project</b> Minor Delay,
-    <b class="red">${cr} project</b> Critical Delay.
-    ${ea>0?`<b>${ea} project</b> masih Early Stage.`:''}
+    Per <b>${fmtT(new Date())}</b>, total <b>${t} project aktif</b> sedang berjalan di <b>${brands.length} brand FnB</b>
+    (${brands.join(', ')}), dikelola oleh ${pms.map(p=>'<b>'+p+'</b> ('+fil.filter(d=>d.namaPM===p).length+' project)').join(' dan ')}.
+    Rata-rata progress keseluruhan saat ini <b>${avg}%</b>, dengan rincian
+    <b class="green">${on} project (${onPct}%) On Track</b>,
+    <b class="yellow">${mn} project Minor Delay</b>,
+    dan <b class="red">${cr} project Critical Delay</b>${ea>0?`, serta <b>${ea} project</b> masih di tahap Early Stage`:''}.
   </p>
   
   <div style="margin-bottom:12px;">
