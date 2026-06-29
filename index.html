@@ -1361,11 +1361,18 @@ function applyF() {
   // agar brand yang seluruh proyeknya sudah selesai/100% tetap tampil (bukan hilang)
   filAll = fil.slice();
 
-  // Project dengan status 'Selesai' ATAU aktual 100% tidak ditampilkan di tabel aktif
+  // Project hilang dari tabel aktif HANYA jika status 'Selesai' DAN tanggal opening sudah lewat/tercapai.
+  // Project yang sudah 100% tapi belum lewat tanggal opening / belum berstatus Selesai TETAP tampil.
   fil = fil.filter(function(d){
     var statusSelesai = (d.status||'').toLowerCase() === 'selesai';
-    var aktualSelesai = (d.aktual || 0) >= 100;
-    return !statusSelesai && !aktualSelesai;
+    var openingRaw = d.aktualOpening || d.targetOpening;
+    var openingLewat = false;
+    if(openingRaw){
+      var dOp = new Date(openingRaw); dOp.setHours(0,0,0,0);
+      if(!isNaN(dOp.getTime())) openingLewat = dOp <= hariIni;
+    }
+    var shouldHide = statusSelesai && openingLewat;
+    return !shouldHide;
   });
 
   expandedIdx = null;
