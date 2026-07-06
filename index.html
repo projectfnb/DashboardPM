@@ -1348,12 +1348,26 @@ function applyF() {
 
   // 4. Auto-koreksi status: project yang melewati SPK Selesai DAN belum 100% = Critical Delay
   //    (Apapun status yang diinput SM, override jika tanggal sudah lewat)
+  //    [FIX v27] Pengecualian: jangan override project yang status aslinya 'Selesai'.
+  //    [FIX v28] Jika aktualOpening sudah diisi dan sudah lewat → auto-set 'Selesai'
+  //              supaya shouldHide bisa catch-nya, walau PM lupa update status di GSheet.
   fil.forEach(function(d){
     if(!d.spkEnd) return;
+    if((d.status||'').toLowerCase() === 'selesai') return; // jangan override project selesai
+    // [FIX v28] auto-Selesai via aktualOpening
+    var aOpRaw = d.aktualOpening;
+    if(aOpRaw){
+      var aOp = new Date(aOpRaw); aOp.setHours(0,0,0,0);
+      if(!isNaN(aOp.getTime()) && aOp <= hariIni){
+        d.status    = 'Selesai'; // auto-set agar shouldHide bekerja
+        d._autoSelesai = true;  // flag untuk debug/logging
+        return;
+      }
+    }
     var spkEndDate = new Date(d.spkEnd); spkEndDate.setHours(0,0,0,0);
     if(spkEndDate < hariIni && d.aktual < 100){
-      d.status = 'Critical Delay'; // Override paksa
-      d._overdue = true; // flag untuk info tambahan di tabel
+      d.status  = 'Critical Delay'; // Override paksa
+      d._overdue = true;
     }
   });
 
@@ -1361,9 +1375,12 @@ function applyF() {
   // agar brand yang seluruh proyeknya sudah selesai/100% tetap tampil (bukan hilang)
   filAll = fil.slice();
 
-  // Project hilang dari tabel aktif HANYA jika status 'Selesai' DAN tanggal opening sudah lewat/tercapai.
-  // Project yang sudah 100% tapi belum lewat tanggal opening / belum berstatus Selesai TETAP tampil.
+  // Project hilang dari tabel aktif jika:
+  // (a) status 'Selesai' DAN tanggal opening sudah lewat/tercapai, ATAU
+  // (b) [FIX v28] aktualOpening sudah diisi dan sudah lewat (sudah grand opening),
+  //     walau PM belum sempat update status di GSheet.
   fil = fil.filter(function(d){
+    // (a) status Selesai + opening lewat
     var statusSelesai = (d.status||'').toLowerCase() === 'selesai';
     var openingRaw = d.aktualOpening || d.targetOpening;
     var openingLewat = false;
@@ -1371,7 +1388,13 @@ function applyF() {
       var dOp = new Date(openingRaw); dOp.setHours(0,0,0,0);
       if(!isNaN(dOp.getTime())) openingLewat = dOp <= hariIni;
     }
-    var shouldHide = statusSelesai && openingLewat;
+    // (b) aktualOpening sudah lewat → sudah pasti selesai
+    var aktualOpeningLewat = false;
+    if(d.aktualOpening){
+      var dAO = new Date(d.aktualOpening); dAO.setHours(0,0,0,0);
+      if(!isNaN(dAO.getTime())) aktualOpeningLewat = dAO <= hariIni;
+    }
+    var shouldHide = (statusSelesai && openingLewat) || aktualOpeningLewat;
     return !shouldHide;
   });
 
@@ -1429,6 +1452,21 @@ function rWeeklyAlert(){
   // Project pre-fitout (SPK Mulai > hari ini) TIDAK masuk ke weekly alert
   var today2 = new Date(); today2.setHours(0,0,0,0);
 
+  // [FIX v27] Bangun latestRawPerProject dulu: ambil 1 baris terbaru (mingguKe tertinggi)
+  // per kombinasi SM+Project. Sebelumnya semua row ikut → project aktual=100 di baris
+  // terbaru masih masuk smProjects karena baris lama (aktual<100) lolos guard.
+  var normProj2 = function(s){ return (s||'').toLowerCase().replace(/\s+/g,' ').trim(); };
+  var latestRawMap = {}; // key: sm|project → row terbaru
+  raw.forEach(function(d){
+    if(!d.namaProject || d.namaProject==='—') return;
+    if(!d.sm || d.sm==='—') return;
+    var key = d.sm+'|'+normProj2(d.namaProject);
+    if(!latestRawMap[key] || Number(d.mingguKe) > Number(latestRawMap[key].mingguKe)){
+      latestRawMap[key] = d;
+    }
+  });
+  var latestRaw = Object.values(latestRawMap);
+
   // smProjects: { smName → { projects: {namaProject: bool}, submittedProjects: {namaProject: tsDate}, latestTs: {} } }
   var smProjects = {};
   var noSmProjects = []; // project aktif tapi nama SM kosong/strip — dicatat terpisah, jangan hilang diam-diam
@@ -1438,21 +1476,44 @@ function rWeeklyAlert(){
 
   // Kumpulkan semua project aktif per SM — key pakai normProj
   // Definisi "aktif" disamakan dengan applyF(): project TANPA SPK Mulai tetap dianggap aktif.
-  raw.forEach(function(d){
+  // [FIX v27] Gunakan latestRaw (1 row per SM+project) bukan raw (semua row).
+  // [FIX v27] Exclude: project selesai (status=Selesai) ATAU aktual>=100,
+  //           kecuali aktualOpening belum lewat (masih perlu pantau).
+  latestRaw.forEach(function(d){
     if(!d.namaProject || d.namaProject==='—') return;
     var spkMulai = d.spkStart ? new Date(d.spkStart) : null;
     if(spkMulai) spkMulai.setHours(0,0,0,0);
     var isAktif = !spkMulai || spkMulai <= today2;
     if(!isAktif) return;
-    if((d.aktual || 0) >= 100) return; // project 100% tidak perlu ditagih submit
+
+    // [FIX v27/v28] Tentukan apakah project ini benar-benar masih perlu dimonitor.
+    // Logika sama dengan shouldHide di applyF() + auto-Selesai via aktualOpening.
+    var statusSelesai = (d.status||'').toLowerCase() === 'selesai';
+    var openingRaw    = d.aktualOpening || d.targetOpening;
+    var openingLewat  = false;
+    if(openingRaw){
+      var dOp = new Date(openingRaw); dOp.setHours(0,0,0,0);
+      if(!isNaN(dOp.getTime())) openingLewat = dOp <= today2;
+    }
+    // [FIX v28] aktualOpening lewat → sudah opening, tidak perlu ditagih laporan lagi
+    var aktualOpeningLewat = false;
+    if(d.aktualOpening){
+      var dAO = new Date(d.aktualOpening); dAO.setHours(0,0,0,0);
+      if(!isNaN(dAO.getTime())) aktualOpeningLewat = dAO <= today2;
+    }
+    var shouldExclude = (statusSelesai && openingLewat)
+                     || aktualOpeningLewat          // sudah grand opening → exclude
+                     || (d.aktual||0) >= 100;       // progress 100% → exclude
+    if(shouldExclude) return;
+
     if(!d.sm || d.sm==='—'){
       if(noSmProjects.indexOf(d.namaProject)===-1) noSmProjects.push(d.namaProject);
-      return; // tidak bisa dikelompokkan per SM, jangan masuk smProjects
+      return;
     }
     if(!smProjects[d.sm]) smProjects[d.sm] = { projects:{}, submittedProjects:{}, latestTs:{}, displayNames:{} };
     var nk = normProj(d.namaProject);
     smProjects[d.sm].projects[nk] = true;
-    smProjects[d.sm].displayNames[nk] = d.namaProject; // simpan nama asli untuk display
+    smProjects[d.sm].displayNames[nk] = d.namaProject;
   });
 
   // Cek submission minggu ini: per SM+Project
