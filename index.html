@@ -172,13 +172,14 @@ html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:
 @keyframes marqueeScroll{0%{transform:translateX(20%);}100%{transform:translateX(-100%);}}
 @keyframes si{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
 
-.krow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.krow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
   padding:11px 12px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s;}
 .kpi:hover{transform:translateY(-2px);border-color:var(--bho);}
 .kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:var(--r) var(--r) 0 0;}
 .kpi.kt::after{background:var(--blue);}
 .kpi.ko::after{background:var(--green);}
+.kpi.ke::after{background:var(--teal);}
 .kpi.km::after{background:var(--yellow);}
 .kpi.kc::after{background:var(--red);}
 .ktop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;}
@@ -190,6 +191,7 @@ html,body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:
 .kval{font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;}
 .kpi.kt .kval{color:var(--blue);}
 .kpi.ko .kval{color:var(--green);}
+.kpi.ke .kval{color:var(--teal);}
 .kpi.km .kval{color:var(--yellow);}
 .kpi.kc .kval{color:var(--red);}
 .klbl{font-size:10px;color:var(--t2);margin-top:3px;font-weight:500;}
@@ -785,6 +787,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
     <div class="krow">
       <div class="kpi kt"><div class="ktop"><span class="kico">📋</span><span class="ktrend tn" id="ktt">—</span></div><div class="kval" id="kt">—</div><div class="klbl">Total Project</div><div class="ksub" id="kts">—</div></div>
       <div class="kpi ko"><div class="ktop"><span class="kico">✅</span><span class="ktrend tu" id="kot">—</span></div><div class="kval" id="ko">—</div><div class="klbl">On Track</div><div class="ksub" id="kos">—</div></div>
+      <div class="kpi ke"><div class="ktop"><span class="kico">🔵</span><span class="ktrend tu" id="ket">—</span></div><div class="kval" id="ke" style="color:var(--teal)">—</div><div class="klbl">Early Stage</div><div class="ksub" id="kes">—</div></div>
       <div class="kpi km"><div class="ktop"><span class="kico">⚠️</span><span class="ktrend td" id="kmt">—</span></div><div class="kval" id="km">—</div><div class="klbl">Minor Delay</div><div class="ksub" id="kms">—</div></div>
       <div class="kpi kc"><div class="ktop"><span class="kico">🔴</span><span class="ktrend td" id="kct">—</span></div><div class="kval" id="kc">—</div><div class="klbl">Critical Delay</div><div class="ksub" id="kcs">—</div></div>
     </div>
@@ -845,6 +848,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
               <circle id="dOn" cx="40" cy="40" r="28" fill="none" stroke="#22c55e" stroke-width="9" stroke-dasharray="0 176" stroke-linecap="round" style="transition:stroke-dasharray 1s ease"/>
               <circle id="dMn" cx="40" cy="40" r="28" fill="none" stroke="#f59e0b" stroke-width="9" stroke-dasharray="0 176" stroke-linecap="round" style="transition:stroke-dasharray 1s ease"/>
               <circle id="dCr" cx="40" cy="40" r="28" fill="none" stroke="#ef4444" stroke-width="9" stroke-dasharray="0 176" stroke-linecap="round" style="transition:stroke-dasharray 1s ease"/>
+              <circle id="dEa" cx="40" cy="40" r="28" fill="none" stroke="#14b8a6" stroke-width="9" stroke-dasharray="0 176" stroke-linecap="round" style="transition:stroke-dasharray 1s ease"/>
             </svg>
             <div class="dcenter"><div class="dpct" id="dpct" style="color:var(--green)">—%</div><div class="dsub">On Track</div></div>
           </div>
@@ -1522,9 +1526,36 @@ function rWeeklyAlert(){
   // Untuk handle keduanya, coba parse kedua format
   function parseTimestamp(ts){
     if(!ts) return null;
-    // Format lengkap: "06/06/2026 10:23:45" atau "6/6/2026 10:23:45" -> dd/MM/yyyy
+    // [FIX v29] GAS bisa mengirim timestamp "D/M/yyyy H:mm:ss" ATAU "M/D/yyyy H:mm:ss"
+    // tergantung locale Google Sheets — sebelumnya kode SELALU asumsi dd/MM/yyyy.
+    // Akibatnya: setiap tanggal dgn hari & bulan yg sama-sama <=12 (mis. hari ini
+    // tanggal 7 bulan 7 → 7/7, tidak masalah; tapi submission "kemarin" tanggal
+    // 7/6 bisa salah dibaca sbg 6 Juli, bukan 6 Juli/ atau malah bulan lain)
+    // ter-parse ke tanggal yg salah, sehingga jatuh di luar window "minggu ini"
+    // dan SM yg SUDAH submit kemarin tetap muncul sbg "belum submit".
+    // Fix: coba kedua interpretasi, pilih yang paling masuk akal (dekat hari ini).
+    var _now = new Date();
+    function _plausible(d){
+      if(!d || isNaN(d.getTime())) return false;
+      return d.getTime() <= _now.getTime() + 86400000 && d.getTime() >= _now.getTime() - 45*86400000;
+    }
+    // Format lengkap: "06/06/2026 10:23:45" atau "6/6/2026 10:23:45"
     var m = ts.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
-    if(m) return new Date(+m[3], +m[2]-1, +m[1], +m[4], +m[5], m[6]?+m[6]:0);
+    if(m){
+      var a=+m[1], b=+m[2], y=+m[3], hh=+m[4], mi=+m[5], ss=m[6]?+m[6]:0;
+      var asDDMM = (b>=1 && b<=12) ? new Date(y, b-1, a, hh, mi, ss) : null; // a=hari, b=bulan
+      var asMMDD = (a>=1 && a<=12) ? new Date(y, a-1, b, hh, mi, ss) : null; // a=bulan, b=hari
+      if(a>12 && asDDMM) return asDDMM;   // a>12 -> a pasti hari -> format dd/MM
+      if(b>12 && asMMDD) return asMMDD;   // b>12 -> b pasti hari -> format MM/dd
+      // ambigu (keduanya <=12): pilih interpretasi yang paling masuk akal
+      var ddOk = _plausible(asDDMM), mmOk = _plausible(asMMDD);
+      if(ddOk && !mmOk) return asDDMM;
+      if(mmOk && !ddOk) return asMMDD;
+      if(ddOk && mmOk){
+        return Math.abs(_now-asDDMM) <= Math.abs(_now-asMMDD) ? asDDMM : asMMDD;
+      }
+      return asDDMM || asMMDD; // fallback
+    }
     // Format "yyyy-MM-dd" atau "yyyy-dd-MM" (GAS kadang swap hari/bulan)
     // Deteksi: jika bagian ke-2 > 12, berarti itu hari bukan bulan -> swap
     // → anggap jam 00:00 hari itu (tidak bisa tahu jam aslinya)
@@ -1726,10 +1757,15 @@ function rSL(){
 
 /* ─── KPI ─── */
 function rKPI(){
-  const t=fil.length, on=fil.filter(d=>d.status==='On Track'||d.status==='Early Stage').length;
-  const mn=fil.filter(d=>d.status==='Minor Delay').length, cr=fil.filter(d=>d.status==='Critical Delay').length;
+  // [FIX v29] Banner sekarang punya kartu terpisah utk "On Track" dan "Early Stage"
+  // (sebelumnya digabung jadi satu angka "On Track" saja) supaya SELALU sinkron
+  // dengan kategori di Health Status donut.
+  const t=fil.length, on=fil.filter(d=>d.status==='On Track').length;
+  const ea=fil.filter(d=>d.status==='Early Stage').length;
   g('kt').textContent=t; g('kts').textContent=BRANDS.filter(b=>fil.find(d=>normBrand(d.brand)===normBrand(b))).length+' brand aktif'; g('ktt').textContent=t+' proj';
   g('ko').textContent=on; g('kos').textContent=t?Math.round(on/t*100)+'% dari total':'—'; g('kot').textContent=t?'+'+Math.round(on/t*100)+'%':'—';
+  g('ke').textContent=ea; g('kes').textContent=t?Math.round(ea/t*100)+'% dari total':'—'; g('ket').textContent=t?'+'+Math.round(ea/t*100)+'%':'—';
+  const mn=fil.filter(d=>d.status==='Minor Delay').length, cr=fil.filter(d=>d.status==='Critical Delay').length;
   g('km').textContent=mn; g('kms').textContent=t?Math.round(mn/t*100)+'% dari total':'—'; g('kmt').textContent=mn?mn+' proj':'0';
   g('kc').textContent=cr; g('kcs').textContent=t?Math.round(cr/t*100)+'% dari total':'—'; g('kct').textContent=cr?'⚠ '+cr:'✓ 0';
 }
@@ -2140,11 +2176,15 @@ function rDonut(){
   const mn=fil.filter(d=>d.status==='Minor Delay').length,cr=fil.filter(d=>d.status==='Critical Delay').length;
   const ea=fil.filter(d=>d.status==='Early Stage').length;
   const circ=2*Math.PI*28;
-  const op=t?on/t:0,mp=t?mn/t:0,cp=t?cr/t:0;
+  const op=t?on/t:0,mp=t?mn/t:0,cp=t?cr/t:0,ep=t?ea/t:0;
   let off=0;
   arc('dOn',op,circ,off); off+=op*circ;
   arc('dMn',mp,circ,off); off+=mp*circ;
-  arc('dCr',cp,circ,off);
+  arc('dCr',cp,circ,off); off+=cp*circ;
+  // [FIX v29] Sebelumnya Early Stage cuma muncul di legend (dle) tapi TIDAK punya
+  // segmen arc sendiri di donut — jadi porsinya cuma tampak sbg celah kosong,
+  // tidak konsisten dgn keterangan (legend) yang menyebutkan Early Stage.
+  arc('dEa',ep,circ,off);
   g('dpct').textContent=t?Math.round(op*100)+'%':'—%';
   g('dlo').textContent=on; g('dlm').textContent=mn; g('dlc').textContent=cr; g('dle').textContent=ea;
 }
