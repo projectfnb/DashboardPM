@@ -1380,25 +1380,37 @@ function applyF() {
   filAll = fil.slice();
 
   // Project hilang dari tabel aktif jika:
-  // (a) status 'Selesai' DAN tanggal opening sudah lewat/tercapai, ATAU
-  // (b) [FIX v28] aktualOpening sudah diisi dan sudah lewat (sudah grand opening),
+  // (a) status 'Selesai' DAN tanggal opening + 7 hari sudah lewat, ATAU
+  // (b) [FIX v28] aktualOpening sudah diisi dan (opening + 7 hari) sudah lewat,
   //     walau PM belum sempat update status di GSheet.
+  // [FIX v30] Project selesai TIDAK langsung hilang di minggu SM submit —
+  //           tetap tampil dengan badge "Selesai" selama 7 hari sejak tanggal
+  //           opening (aktual/target), baru hilang otomatis setelah itu.
+  var HIDE_GRACE_DAYS = 7;
   fil = fil.filter(function(d){
-    // (a) status Selesai + opening lewat
+    // (a) status Selesai + (opening + grace period) lewat
     var statusSelesai = (d.status||'').toLowerCase() === 'selesai';
     var openingRaw = d.aktualOpening || d.targetOpening;
-    var openingLewat = false;
+    var openingLewatGrace = false;
     if(openingRaw){
       var dOp = new Date(openingRaw); dOp.setHours(0,0,0,0);
-      if(!isNaN(dOp.getTime())) openingLewat = dOp <= hariIni;
+      if(!isNaN(dOp.getTime())){
+        var dOpGrace = new Date(dOp); dOpGrace.setDate(dOpGrace.getDate()+HIDE_GRACE_DAYS);
+        openingLewatGrace = dOpGrace <= hariIni;
+      }
     }
-    // (b) aktualOpening sudah lewat → sudah pasti selesai
-    var aktualOpeningLewat = false;
+    // (b) aktualOpening + grace period sudah lewat → sudah pasti selesai & lewat masa tampil
+    var aktualOpeningLewatGrace = false;
     if(d.aktualOpening){
       var dAO = new Date(d.aktualOpening); dAO.setHours(0,0,0,0);
-      if(!isNaN(dAO.getTime())) aktualOpeningLewat = dAO <= hariIni;
+      if(!isNaN(dAO.getTime())){
+        var dAOGrace = new Date(dAO); dAOGrace.setDate(dAOGrace.getDate()+HIDE_GRACE_DAYS);
+        aktualOpeningLewatGrace = dAOGrace <= hariIni;
+      }
     }
-    var shouldHide = (statusSelesai && openingLewat) || aktualOpeningLewat;
+    // Tandai project yang sudah selesai tapi masih dalam masa tampil (untuk badge di rTable)
+    d._selesaiTampil = statusSelesai && !openingLewatGrace && !aktualOpeningLewatGrace;
+    var shouldHide = (statusSelesai && openingLewatGrace) || aktualOpeningLewatGrace;
     return !shouldHide;
   });
 
@@ -2062,7 +2074,7 @@ function rTable(){
         </div>
       </td>
       <td>${sisaHari(d.spkEnd, d.targetOpening)}</td>
-      <td>${sbg(d.status)}${d._overdue ? '<div style="font-size:7.5px;color:var(--red);margin-top:2px;font-weight:600">⏰ Lewat SPK</div>' : ''}</td>
+      <td>${sbg(d.status)}${d._overdue ? '<div style="font-size:7.5px;color:var(--red);margin-top:2px;font-weight:600">⏰ Lewat SPK</div>' : ''}${d._selesaiTampil ? '<div style="font-size:7.5px;color:var(--t3);margin-top:2px;font-weight:600">✅ Selesai — auto-hilang H+7 opening</div>' : ''}</td>
       <td style="color:var(--t3);font-size:11px;text-align:center">${isExp?'▲':'▼'}</td>
     </tr>`;
     if(isExp) html+=disiplinRow(d,10);
