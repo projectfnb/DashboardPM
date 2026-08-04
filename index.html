@@ -1551,9 +1551,15 @@ function rWeeklyAlert(){
       var dAO = new Date(d.aktualOpening); dAO.setHours(0,0,0,0);
       if(!isNaN(dAO.getTime())) aktualOpeningLewat = dAO <= today2;
     }
+    // [FIX v30-4] SEBELUMNYA: aktual>=100 langsung meng-exclude project dari tracker,
+    // walau project itu belum Grand Opening (Aktual Opening masih kosong). Akibatnya
+    // SM yang baru submit laporan dgn progress 100% jadi "hilang" dari kedua panel
+    // (Sudah Submit / Belum Submit) — bukan salah tampil, tapi memang tidak dihitung.
+    // FIX: hanya exclude kalau project SUDAH benar-benar Grand Opening (aktualOpeningLewat)
+    // atau statusnya "Selesai" dan opening-nya sudah lewat. Progress 100% saja TIDAK
+    // cukup untuk berhenti menagih laporan mingguan.
     var shouldExclude = (statusSelesai && openingLewat)
-                     || aktualOpeningLewat          // sudah grand opening → exclude
-                     || (d.aktual||0) >= 100;       // progress 100% → exclude
+                     || aktualOpeningLewat;         // sudah grand opening → exclude
     if(shouldExclude) return;
 
     if(!d.sm || d.sm==='—'){
