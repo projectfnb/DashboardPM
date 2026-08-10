@@ -2382,14 +2382,35 @@ function renderSCurve(projectName){
   // [FIX] Sebelumnya semua titik didekati dgn "dStart + wk*7hari", jadi kalau submit
   // minggu-1 SM baru masuk 10-14 hari setelah SPK Mulai, progres yg sebenarnya butuh
   // waktu segitu malah digambar seolah cuma butuh 7 hari → keliatan lompat vertikal.
+  // [FIX v30-6] Timestamp mentah kadang formatnya ambigu (mis. "10/08/2026" bisa
+  // kebaca browser sbg Oktober-8, bukan 10 Agustus) → titiknya jadi mundur & garis
+  // "membalik ke kiri" / self-crossing. Sekarang tanggal diparsing lewat parseDate()
+  // yg sudah aman dd/MM/yyyy, dan urutan waktu antar titik DIPAKSA selalu maju.
+  function safeParseTS(raw){
+    if(!raw) return null;
+    var datePart = String(raw).trim().split(' ')[0]; // buang jam kalau ada
+    var iso = parseDate(datePart);
+    if(!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return null;
+    var d = new Date(iso+'T00:00:00');
+    return isNaN(d.getTime()) ? null : d;
+  }
   var actualPts = [{x:dStart, y:0}].concat(hist.map(function(d){
     var wk = Math.max(parseF(d.mingguKe),1);
     var fallbackDt = new Date(dStart.getTime() + wk*7*86400000);
-    var realDt = d.periodeEnd || d.periodeStart || d.timestamp;
-    var dt = realDt ? new Date(realDt) : null;
+    var dt = null;
+    if(d.periodeEnd)        dt = new Date(d.periodeEnd+'T00:00:00');
+    else if(d.periodeStart) dt = new Date(d.periodeStart+'T00:00:00');
+    else if(d.timestamp)    dt = safeParseTS(d.timestamp);
     if(!dt || isNaN(dt.getTime()) || dt.getTime() < dStart.getTime()) dt = fallbackDt;
     return {x:dt, y:Math.max(0,Math.min(100, parseF(d.aktual))), wk:d.mingguKe};
   }));
+  // Paksa urutan waktu selalu maju — kalau ada titik dgn tanggal <= titik sebelumnya
+  // (data timestamp aneh/salah), geser maju 1 hari supaya path tidak pernah mundur.
+  for(var _ai=1; _ai<actualPts.length; _ai++){
+    if(actualPts[_ai].x.getTime() <= actualPts[_ai-1].x.getTime()){
+      actualPts[_ai].x = new Date(actualPts[_ai-1].x.getTime() + 86400000);
+    }
+  }
 
   // Titik referensi target mingguan asli (sumber: Weekly Report SM) — ditampilkan sebagai titik saja,
   // TIDAK dijadikan garis (karena kenaikannya nyaris rata/linear per minggu, bukan S)
