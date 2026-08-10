@@ -368,6 +368,12 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
 .pcpct{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;}
 .pcmeta{display:flex;justify-content:space-between;align-items:center;margin-top:2px;}
 .pcsm{font-size:8px;color:var(--t3);}
+.pfmini-grid{display:flex;flex-wrap:wrap;gap:3px;margin:4px 0 3px;}
+.pfmini-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.pfmini-dot.done{background:var(--green);}
+.pfmini-dot.proses{background:var(--orange);}
+.pfmini-dot.belum{background:var(--border);}
+.pcard-pf{border-color:rgba(45,158,160,.35);}
 
 /* LOADING */
 #loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;
@@ -2371,10 +2377,17 @@ function renderSCurve(projectName){
   }
   if(isNaN(dOpening.getTime()) || dOpening.getTime() < dSpkEnd.getTime()) dOpening = dSpkEnd;
 
-  // Titik aktual: tanggal didekati dari SPK Mulai + mingguKe minggu (akhir minggu ke-N)
+  // Titik aktual: pakai tanggal ASLI submit SM (Periode End / Timestamp) kalau ada,
+  // baru fallback ke SPK Mulai + mingguKe*7 hari kalau datanya kosong/tidak valid.
+  // [FIX] Sebelumnya semua titik didekati dgn "dStart + wk*7hari", jadi kalau submit
+  // minggu-1 SM baru masuk 10-14 hari setelah SPK Mulai, progres yg sebenarnya butuh
+  // waktu segitu malah digambar seolah cuma butuh 7 hari → keliatan lompat vertikal.
   var actualPts = [{x:dStart, y:0}].concat(hist.map(function(d){
     var wk = Math.max(parseF(d.mingguKe),1);
-    var dt = new Date(dStart.getTime() + wk*7*86400000);
+    var fallbackDt = new Date(dStart.getTime() + wk*7*86400000);
+    var realDt = d.periodeEnd || d.periodeStart || d.timestamp;
+    var dt = realDt ? new Date(realDt) : null;
+    if(!dt || isNaN(dt.getTime()) || dt.getTime() < dStart.getTime()) dt = fallbackDt;
     return {x:dt, y:Math.max(0,Math.min(100, parseF(d.aktual))), wk:d.mingguKe};
   }));
 
@@ -2495,8 +2508,45 @@ function rSR(){
   g('sbT').textContent=t; g('sbA').textContent=avg+'%'; g('sbI').textContent=is; g('sbB').textContent=br;
   const c=g('pcards');
   if(!t){c.innerHTML='<div class="empty">Tidak ada data</div>';return;}
+  const todayPC = new Date(); todayPC.setHours(0,0,0,0);
+  const normPC = s => (s||'').toLowerCase().replace(/\s+/g,'');
   c.innerHTML=[...fil].sort((a,b)=>b.aktual-a.aktual).map(d=>{
     const clr=pclr(d.aktual,d.target);
+
+    // [PRE-FITOUT DETAIL DI PCARD] project yg SPK Mulai-nya belum jalan (>hari ini)
+    // ditampilkan pakai checklist readiness (dari sheet PreFitout), bukan cuma %.
+    let isPreFitout=false;
+    if(d.spkStart){
+      const sd=new Date(d.spkStart);
+      if(!isNaN(sd)){ sd.setHours(0,0,0,0); isPreFitout = sd.getTime() > todayPC.getTime(); }
+    }
+
+    if(isPreFitout){
+      const pfRow = (typeof pfRaw!=='undefined' && pfRaw.length)
+        ? pfRaw.find(r=>normPC(r['Nama Project'])===normPC(d.namaProject))
+        : null;
+
+      if(pfRow && typeof PF_CHECK_ITEMS!=='undefined'){
+        let doneCount=0;
+        const dots=PF_CHECK_ITEMS.map(item=>{
+          const val=pfRow[item.key]||'Belum';
+          if(val==='Sudah'||val==='Done') doneCount++;
+          const cls=(val==='Sudah'||val==='Done')?'done':val==='Proses'?'proses':'belum';
+          return `<div class="pfmini-dot ${cls}" title="${item.label}: ${val}"></div>`;
+        }).join('');
+        const pfPct=Math.round(doneCount/PF_CHECK_ITEMS.length*100);
+        return `<div class="pcard pcard-pf"><div class="pcn">${d.namaProject}</div><div class="pcb">${d.brand} · Pre-Fitout · ${d.namaPM}${d.tipeProject?' · '+d.tipeProject:''}</div>
+          <div class="pcrow"><div class="pcbg"><div class="pcfill" style="width:${pfPct}%;background:var(--teal)"></div></div>
+          <div class="pcpct" style="color:var(--teal)">${pfPct}%</div></div>
+          <div class="pfmini-grid">${dots}</div>
+          <div class="pcmeta"><span class="pcsm">${d.sm}</span><span class="sb s-ea">🔵 Pre-Fitout</span></div></div>`;
+      }
+      // belum submit form pre-fitout sama sekali
+      return `<div class="pcard pcard-pf"><div class="pcn">${d.namaProject}</div><div class="pcb">${d.brand} · Pre-Fitout · ${d.namaPM}${d.tipeProject?' · '+d.tipeProject:''}</div>
+        <div style="font-size:8px;color:var(--yellow);font-weight:600;padding:4px 6px;background:rgba(245,158,11,.08);border-radius:4px;text-align:center;margin:3px 0">⏳ Form pre-fitout belum diisi</div>
+        <div class="pcmeta"><span class="pcsm">${d.sm}</span><span class="sb s-ea">🔵 Pre-Fitout</span></div></div>`;
+    }
+
     return `<div class="pcard"><div class="pcn">${d.namaProject}</div><div class="pcb">${d.brand} · W${d.mingguKe} · ${d.namaPM}${d.tipeProject?' · '+d.tipeProject:''}</div>
       <div class="pcrow"><div class="pcbg"><div class="pcfill" style="width:${d.aktual}%;background:${clr}"></div></div>
       <div class="pcpct" style="color:${clr}">${d.aktual}%</div></div>
@@ -2741,6 +2791,7 @@ function fetchPrefitout(){
     pfAllProjects = (resProj && resProj.ok && Array.isArray(resProj.projects)) ? resProj.projects : [];
     if(el) el.textContent = 'Update: ' + new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
     renderPrefitout();
+    if(typeof rSR==='function') rSR(); // refresh pcards agar detail pre-fitout ikut muncul
   }).catch(function(){
     if(el) el.textContent = 'Gagal memuat';
     renderPrefitout();
