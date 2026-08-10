@@ -2449,23 +2449,40 @@ function renderSCurve(projectName){
       return (i===0?'M':'L')+xPix(p.x.getTime()).toFixed(1)+','+yPix(p.y).toFixed(1);
     }).join(' ');
   }
-  // Interpolasi smoothstep antar titik berurutan (x linear waktu, y diease 3t²-2t³)
-  // supaya garis Aktual juga melengkung halus, bukan segmen lurus patah-patah.
-  function smoothInterp(pts, stepsPerSeg){
-    if(pts.length<2) return pts.slice();
-    var out=[pts[0]];
-    for(var i=0;i<pts.length-1;i++){
-      var p0=pts[i], p1=pts[i+1];
-      for(var s=1;s<=stepsPerSeg;s++){
-        var t=s/stepsPerSeg;
-        var te=3*t*t-2*t*t*t;
-        out.push({
-          x:new Date(p0.x.getTime()+(p1.x.getTime()-p0.x.getTime())*t),
-          y:p0.y+(p1.y-p0.y)*te
-        });
-      }
+  // [FIX v30-8] Ganti "smoothstep per-segmen" (landai paksa di tiap ujung segmen →
+  // bikin awal keliatan flat) DAN "garis lurus apa adanya" (jadi patah-patah di tiap
+  // checkpoint) dengan MONOTONE CUBIC SPLINE (Fritsch-Carlson): kemiringan tiap titik
+  // dihitung dari kemiringan data asli di sekitarnya (bukan dipaksa nol), jadi:
+  //  • tetap mulus/melengkung menyambung semua checkpoint (bukan patah-patah)
+  //  • awal kurva TIDAK flat lagi (kemiringan awal = kemiringan data asli ke checkpoint-1)
+  //  • tidak overshoot/naik-turun palsu di antara titik (khas monotone spline)
+  function monotoneCubicPath(pts){
+    var n = pts.length;
+    if(n<2) return '';
+    if(n===2) return 'M'+pts[0].x.toFixed(1)+','+pts[0].y.toFixed(1)+' L'+pts[1].x.toFixed(1)+','+pts[1].y.toFixed(1);
+    var dx=[], dSlope=[];
+    for(var i=0;i<n-1;i++){
+      dx[i]=pts[i+1].x-pts[i].x;
+      dSlope[i]= dx[i]!==0 ? (pts[i+1].y-pts[i].y)/dx[i] : 0;
     }
-    return out;
+    var m=[dSlope[0]];
+    for(var i=1;i<n-1;i++){
+      m[i] = (dSlope[i-1]*dSlope[i] <= 0) ? 0 : (dSlope[i-1]+dSlope[i])/2;
+    }
+    m[n-1]=dSlope[n-2];
+    for(var i=0;i<n-1;i++){
+      if(dSlope[i]===0){ m[i]=0; m[i+1]=0; continue; }
+      var a=m[i]/dSlope[i], b=m[i+1]/dSlope[i], s=a*a+b*b;
+      if(s>9){ var tau=3/Math.sqrt(s); m[i]=tau*a*dSlope[i]; m[i+1]=tau*b*dSlope[i]; }
+    }
+    var path='M'+pts[0].x.toFixed(1)+','+pts[0].y.toFixed(1);
+    for(var i=0;i<n-1;i++){
+      var h=dx[i];
+      var c1x=pts[i].x+h/3,   c1y=pts[i].y+m[i]*h/3;
+      var c2x=pts[i+1].x-h/3, c2y=pts[i+1].y-m[i+1]*h/3;
+      path+=' C'+c1x.toFixed(1)+','+c1y.toFixed(1)+' '+c2x.toFixed(1)+','+c2y.toFixed(1)+' '+pts[i+1].x.toFixed(1)+','+pts[i+1].y.toFixed(1);
+    }
+    return path;
   }
 
   var gridLines = [0,25,50,75,100].map(function(v){
@@ -2493,7 +2510,8 @@ function renderSCurve(projectName){
   }
 
   var planPath = pathOf(planPts);
-  var actualPath = actualPts.length>1 ? pathOf(smoothInterp(actualPts, 10)) : '';
+  var actualPtsPx = actualPts.map(function(p){ return {x:xPix(p.x.getTime()), y:yPix(p.y)}; });
+  var actualPath = actualPts.length>1 ? monotoneCubicPath(actualPtsPx) : '';
   var actualDots = actualPts.filter(function(p){return p.wk!==undefined;}).map(function(p){
     return '<circle cx="'+xPix(p.x.getTime()).toFixed(1)+'" cy="'+yPix(p.y).toFixed(1)+'" r="2.6" fill="var(--green)"><title>Aktual W'+p.wk+': '+p.y+'%</title></circle>';
   }).join('');
