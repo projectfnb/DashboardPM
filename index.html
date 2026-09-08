@@ -389,6 +389,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
   justify-content:center;z-index:200;}
 .mbox{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px;
   width:420px;max-width:95vw;}
+.mbox-wide{width:820px;}
 .mtitle{font-size:13px;font-weight:700;margin-bottom:5px;}
 .mdesc{font-size:11px;color:var(--t2);margin-bottom:14px;line-height:1.6;}
 .minput{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);
@@ -654,6 +655,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
     </div>
     <div class="hright">
       <button class="btn btn-o" onclick="refreshData()">↻ Refresh</button>
+      <button class="btn btn-g" onclick="showArsip()">📁 Arsip Selesai</button>
       <button class="btn btn-g" onclick="showSettings()">⚙ GAS</button>
       <button id="themeBtn" onclick="toggleTheme()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--t1);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px">🌙 Dark</button>
       <div class="live"><span class="ldot"></span><span id="lup">—</span></div>
@@ -832,6 +834,15 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
       <div class="kpi kc"><div class="ktop"><span class="kico">🔴</span><span class="ktrend td" id="kct">—</span></div><div class="kval" id="kc">—</div><div class="klbl">Critical Delay</div><div class="ksub" id="kcs">—</div></div>
     </div>
 
+    <!-- [v31] Banner Opening Minggu Ini -->
+    <div class="card" id="openingMingguIniCard" style="display:none;margin-bottom:14px;border-color:rgba(34,197,94,.35)">
+      <div class="chd">
+        <div class="cht">🎉 Project Opening Minggu Ini</div>
+        <div class="cbadge" id="openingMingguIniCount" style="background:rgba(34,197,94,.15);color:var(--green)">—</div>
+      </div>
+      <div id="openingMingguIniList" style="padding:10px 14px;display:flex;flex-direction:column;gap:0"></div>
+    </div>
+
     <!-- Progress Table -->
     <div class="card">
       <div class="chd">
@@ -985,11 +996,29 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
   </div>
 </div>
 
+<!-- [v31] Modal Arsip Project Selesai -->
+<div class="mov" id="modalArsip" style="display:none">
+  <div class="mbox mbox-wide">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+      <div class="mtitle" style="margin-bottom:0">📁 Arsip Project Selesai</div>
+      <button class="btn btn-g" style="padding:5px 10px" onclick="closeArsip()">✕ Tutup</button>
+    </div>
+    <div class="mdesc">Semua project yang statusnya sudah Selesai — tetap bisa dicari & dilihat report opening-nya kapan saja, tidak terbatas waktu.</div>
+    <input type="text" class="minput" id="arsipSearchInput" placeholder="Cari nama project / PM / SM…" oninput="arsipSearch=this.value;rArsip()">
+    <div class="cbadge" id="arsipCount" style="margin-bottom:8px;display:inline-block">—</div>
+    <div id="arsipList" style="max-height:60vh;overflow-y:auto"></div>
+  </div>
+</div>
+
 <script>
 let GAS='', raw=[], fil=[], filAll=[];
+// [v31] filArsip = SEMUA project berstatus Selesai (permanen, utk modal Arsip).
+// filOpeningMingguIni = subset filArsip yg tgl openingnya jatuh di minggu berjalan (Senin-Minggu).
+let filArsip=[], filOpeningMingguIni=[];
 var DEFAULT_GAS='https://script.google.com/macros/s/AKfycbzP0ejKcJOBhVcXwLKRe2HnMWSf78i9iHt1CePYGzf-2p1UohF8iaKxPsYNNs3JNHZhRg/exec';
 let fBrand='ALL', fWeek='ALL', fSM='ALL', fPM='ALL', fKtr='ALL', fTipe='ALL', fSearch='';
 let expandedIdx=null;
+let expandedOpeningKey=null, expandedArsipKey=null, arsipSearch='';
 
 const BCLS={'Chatime':'bt-c','Gindaco':'bt-g','Go Go Curry':'bt-gg','88Seoul':'bt-s','Molly Tea':'bt-m'};
 const BCOL={'Chatime':'#ff6961','Gindaco':'#60a5fa','Go Go Curry':'#fbbf24','88Seoul':'#c084fc','Molly Tea':'#2dd4bf'};
@@ -1419,39 +1448,41 @@ function applyF() {
   // agar brand yang seluruh proyeknya sudah selesai/100% tetap tampil (bukan hilang)
   filAll = fil.slice();
 
-  // Project hilang dari tabel aktif jika:
-  // (a) status 'Selesai' DAN tanggal opening + 7 hari sudah lewat, ATAU
-  // (b) [FIX v28] aktualOpening sudah diisi dan (opening + 7 hari) sudah lewat,
-  //     walau PM belum sempat update status di GSheet.
-  // [FIX v30] Project selesai TIDAK langsung hilang di minggu SM submit —
-  //           tetap tampil dengan badge "Selesai" selama 7 hari sejak tanggal
-  //           opening (aktual/target), baru hilang otomatis setelah itu.
-  var HIDE_GRACE_DAYS = 7;
+  // [v31] Project berstatus 'Selesai' dikeluarkan dari tabel aktif dan dipindah ke:
+  //  - filArsip: SEMUA project Selesai, permanen, bisa dicari kapan saja lewat modal Arsip.
+  //  - filOpeningMingguIni: subset filArsip yg tanggal opening (aktual, fallback target)
+  //    jatuh di rentang Senin–Minggu MINGGU BERJALAN → ditampilkan di banner khusus,
+  //    jadi manajemen pasti lihat report opening-nya selama minggu itu, terlepas dari
+  //    kapan persisnya SM submit laporannya (tidak ada lagi bug "keburu hilang").
+  var mondayThisWeek = new Date(hariIni);
+  mondayThisWeek.setDate(hariIni.getDate() - ((hariIni.getDay()+6)%7)); // Senin minggu ini
+  mondayThisWeek.setHours(0,0,0,0);
+  var sundayThisWeek = new Date(mondayThisWeek);
+  sundayThisWeek.setDate(mondayThisWeek.getDate()+6);
+  sundayThisWeek.setHours(23,59,59,999);
+
+  filArsip = [];
+  filOpeningMingguIni = [];
   fil = fil.filter(function(d){
-    // (a) status Selesai + (opening + grace period) lewat
     var statusSelesai = (d.status||'').toLowerCase() === 'selesai';
+    if(!statusSelesai) return true; // bukan project selesai -> tetap di tabel aktif
+
+    filArsip.push(d);
     var openingRaw = d.aktualOpening || d.targetOpening;
-    var openingLewatGrace = false;
     if(openingRaw){
       var dOp = new Date(openingRaw); dOp.setHours(0,0,0,0);
-      if(!isNaN(dOp.getTime())){
-        var dOpGrace = new Date(dOp); dOpGrace.setDate(dOpGrace.getDate()+HIDE_GRACE_DAYS);
-        openingLewatGrace = dOpGrace <= hariIni;
+      if(!isNaN(dOp.getTime()) && dOp>=mondayThisWeek && dOp<=sundayThisWeek){
+        filOpeningMingguIni.push(d);
       }
     }
-    // (b) aktualOpening + grace period sudah lewat → sudah pasti selesai & lewat masa tampil
-    var aktualOpeningLewatGrace = false;
-    if(d.aktualOpening){
-      var dAO = new Date(d.aktualOpening); dAO.setHours(0,0,0,0);
-      if(!isNaN(dAO.getTime())){
-        var dAOGrace = new Date(dAO); dAOGrace.setDate(dAOGrace.getDate()+HIDE_GRACE_DAYS);
-        aktualOpeningLewatGrace = dAOGrace <= hariIni;
-      }
-    }
-    // Tandai project yang sudah selesai tapi masih dalam masa tampil (untuk badge di rTable)
-    d._selesaiTampil = statusSelesai && !openingLewatGrace && !aktualOpeningLewatGrace;
-    var shouldHide = (statusSelesai && openingLewatGrace) || aktualOpeningLewatGrace;
-    return !shouldHide;
+    return false; // keluar dari tabel aktif — sudah dipindah ke arsip
+  });
+
+  // Arsip diurutkan dari opening TERBARU dulu
+  filArsip.sort(function(a,b){
+    var da = new Date(a.aktualOpening||a.targetOpening||0);
+    var db = new Date(b.aktualOpening||b.targetOpening||0);
+    return db-da;
   });
 
   expandedIdx = null;
@@ -1459,7 +1490,8 @@ function applyF() {
   renderAll();
 }
 function renderAll(){
-  rSL(); rDeadlineAlert(); rWeeklyAlert(); rKPI(); rTable(); rIssues(); rDonut(); rHsMove(); rDev(); rSCurveOptions(); rSR(); rAlert(); rSummary();
+  rSL(); rDeadlineAlert(); rWeeklyAlert(); rOpeningMingguIni(); rKPI(); rTable(); rIssues(); rDonut(); rHsMove(); rDev(); rSCurveOptions(); rSR(); rAlert(); rSummary();
+  if(g('modalArsip') && g('modalArsip').style.display!=='none') rArsip();
 }
 
 /* ─── WEEKLY SUBMISSION ALERT ─── */
@@ -2034,6 +2066,45 @@ function disiplinRow(d, colspan){
   </tr>`;
 }
 
+/* ─── [v31] OPENING MINGGU INI ─── */
+function rOpeningMingguIni(){
+  var card=g('openingMingguIniCard'), list=g('openingMingguIniList'), cnt=g('openingMingguIniCount');
+  if(!card) return;
+  if(!filOpeningMingguIni.length){ card.style.display='none'; return; }
+  card.style.display='';
+  cnt.textContent=filOpeningMingguIni.length+' project';
+  var html='';
+  filOpeningMingguIni.forEach(function(d){
+    var key=d.namaProject.replace(/\s/g,'_');
+    var isExp=(expandedOpeningKey===key);
+    var openDate=fmtD(d.aktualOpening||d.targetOpening)||'—';
+    var hasFile=d.fileUrl&&d.fileUrl.startsWith('http');
+    var fileIcon=hasFile?`<a href="${d.fileUrl}" target="_blank" title="Buka Laporan" style="text-decoration:none;margin-left:3px;font-size:11px" onclick="event.stopPropagation()">📄</a>`:'';
+    html+=`<table style="width:100%;border-collapse:collapse;margin-bottom:6px">
+      <tbody>
+        <tr class="trow${isExp?' expanded':''}" style="cursor:pointer" onclick="toggleOpeningRow('${key}')">
+          <td style="width:34%">
+            <span class="pn">${d.namaProject}${fileIcon}<span class="btag ${BCLS[d.brand]||'bt-c'}">${d.brand}</span></span>
+          </td>
+          <td style="width:22%"><span class="prsm">${d.namaPM}</span><div class="prktr">SM: ${d.sm}</div></td>
+          <td style="width:20%">
+            <span style="font-size:8.5px;color:var(--t3)">Opening</span><br>
+            <span style="font-size:10px;font-weight:700;color:var(--green)">${openDate}</span>
+          </td>
+          <td style="width:14%">${sbg(d.status)}</td>
+          <td style="width:10%;text-align:right;color:var(--t3);font-size:11px">${isExp?'▲':'▼'}</td>
+        </tr>
+        ${isExp?disiplinRow(d,5):''}
+      </tbody>
+    </table>`;
+  });
+  list.innerHTML=html;
+}
+function toggleOpeningRow(key){
+  expandedOpeningKey=(expandedOpeningKey===key)?null:key;
+  rOpeningMingguIni();
+}
+
 /* ─── TABLE ─── */
 function rTable(){
   const tb=g('tbody');
@@ -2120,7 +2191,7 @@ function rTable(){
         </div>
       </td>
       <td>${sisaHari(d.spkEnd, d.targetOpening)}</td>
-      <td>${sbg(d.status)}${d._overdue ? '<div style="font-size:7.5px;color:var(--red);margin-top:2px;font-weight:600">⏰ Lewat SPK</div>' : ''}${d._selesaiTampil ? '<div style="font-size:7.5px;color:var(--t3);margin-top:2px;font-weight:600">✅ Selesai — auto-hilang H+7 opening</div>' : ''}</td>
+      <td>${sbg(d.status)}${d._overdue ? '<div style="font-size:7.5px;color:var(--red);margin-top:2px;font-weight:600">⏰ Lewat SPK</div>' : ''}</td>
       <td style="color:var(--t3);font-size:11px;text-align:center">${isExp?'▲':'▼'}</td>
     </tr>`;
     if(isExp) html+=disiplinRow(d,10);
@@ -2773,6 +2844,57 @@ function sbg(s){const m={'On Track':['s-on','✅'],'Minor Delay':['s-mn','⚠'],
 function hideLoad(){const l=g('loading');l.style.opacity='0';setTimeout(()=>l.style.display='none',400);}
 function showSettings(){g('gurl').value=GAS;g('modal').style.display='flex';}
 function closeM(){g('modal').style.display='none';}
+
+/* ─── [v31] ARSIP PROJECT SELESAI ─── */
+function showArsip(){ g('modalArsip').style.display='flex'; rArsip(); }
+function closeArsip(){ g('modalArsip').style.display='none'; }
+function toggleArsipRow(key){
+  expandedArsipKey=(expandedArsipKey===key)?null:key;
+  rArsip();
+}
+function rArsip(){
+  var listEl=g('arsipList'), cntEl=g('arsipCount');
+  if(!listEl) return;
+  var q=(arsipSearch||'').toLowerCase().trim();
+  var data=filArsip.filter(function(d){
+    if(!q) return true;
+    return (d.namaProject||'').toLowerCase().includes(q)
+        || (d.namaPM||'').toLowerCase().includes(q)
+        || (d.sm||'').toLowerCase().includes(q)
+        || (d.brand||'').toLowerCase().includes(q);
+  });
+  cntEl.textContent=data.length+' project selesai';
+  if(!data.length){
+    listEl.innerHTML='<div class="empty" style="padding:20px 0">Tidak ada project yang cocok</div>';
+    return;
+  }
+  var html='';
+  data.forEach(function(d){
+    var key=d.namaProject.replace(/\s/g,'_');
+    var isExp=(expandedArsipKey===key);
+    var openDate=fmtD(d.aktualOpening||d.targetOpening)||'—';
+    var hasFile=d.fileUrl&&d.fileUrl.startsWith('http');
+    var fileIcon=hasFile?`<a href="${d.fileUrl}" target="_blank" title="Buka Laporan" style="text-decoration:none;margin-left:3px;font-size:11px" onclick="event.stopPropagation()">📄</a>`:'';
+    html+=`<table style="width:100%;border-collapse:collapse;margin-bottom:6px">
+      <tbody>
+        <tr class="trow${isExp?' expanded':''}" style="cursor:pointer" onclick="toggleArsipRow('${key}')">
+          <td style="width:34%">
+            <span class="pn">${d.namaProject}${fileIcon}<span class="btag ${BCLS[d.brand]||'bt-c'}">${d.brand}</span></span>
+          </td>
+          <td style="width:22%"><span class="prsm">${d.namaPM}</span><div class="prktr">SM: ${d.sm}</div></td>
+          <td style="width:20%">
+            <span style="font-size:8.5px;color:var(--t3)">Opening</span><br>
+            <span style="font-size:10px;font-weight:700">${openDate}</span>
+          </td>
+          <td style="width:14%">${sbg(d.status)}</td>
+          <td style="width:10%;text-align:right;color:var(--t3);font-size:11px">${isExp?'▲':'▼'}</td>
+        </tr>
+        ${isExp?disiplinRow(d,5):''}
+      </tbody>
+    </table>`;
+  });
+  listEl.innerHTML=html;
+}
 function saveGAS(){const u=g('gurl').value.trim();if(!u)return alert('Masukkan URL GAS');GAS=u;localStorage.setItem('pm26',u);closeM();fetchGAS();}
 function useDemo(){raw=demoData().map(normalizeRow);GAS='';g('lup').textContent='Demo Mode';closeM();applyF();hideLoad();}
 
