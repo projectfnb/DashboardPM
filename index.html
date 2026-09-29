@@ -1433,7 +1433,7 @@ function parseTimestamp(ts){
   }
 
 
-function isOnTrk(d){ return isOnTrk(d) || d.status==='Selesai'; }
+function isOnTrk(d){ return d.status==='On Track' || d.status==='Selesai'; }
 
 function applyF() {
   const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
