@@ -1486,9 +1486,9 @@ function applyF() {
   //    [FIX v28] Jika aktualOpening sudah diisi dan sudah lewat → auto-set 'Selesai'
   //              supaya shouldHide bisa catch-nya, walau PM lupa update status di GSheet.
   fil.forEach(function(d){
-    if(!d.spkEnd) return;
     if((d.status||'').toLowerCase() === 'selesai') return; // jangan override project selesai
     // [FIX v28] auto-Selesai via aktualOpening
+    // [v33] dicek SEBELUM guard spkEnd — project tanpa SPK Selesai tetap ikut auto-Selesai
     var aOpRaw = d.aktualOpening;
     if(aOpRaw){
       var aOp = new Date(aOpRaw); aOp.setHours(0,0,0,0);
@@ -1498,6 +1498,7 @@ function applyF() {
         return;
       }
     }
+    if(!d.spkEnd) return;
     var spkEndDate = new Date(d.spkEnd); spkEndDate.setHours(0,0,0,0);
     if(spkEndDate < hariIni && d.aktual < 100){
       d.status  = 'Critical Delay'; // Override paksa
@@ -1534,16 +1535,8 @@ function applyF() {
     if(_ao) _ao.setHours(0,0,0,0);
     if(!_ao || isNaN(_ao.getTime()) || _ao > hariIni) return true;
 
-    // [v32] Masa tayang: tetap tampil sampai Minggu (akhir pekan) dari tanggal
-    // yang lebih baru antara Aktual Opening dan submit terakhir, supaya tidak
-    // langsung hilang begitu SM submit laporan opening.
-    var _ref = _ao;
-    var _ts = parseTimestamp(d.timestamp);
-    if(_ts && !isNaN(_ts.getTime()) && _ts > _ref) _ref = new Date(_ts.getFullYear(), _ts.getMonth(), _ts.getDate());
-    var _cut = new Date(_ref);
-    _cut.setDate(_ref.getDate() + ((7 - _ref.getDay()) % 7)); // Minggu pekan itu
-    _cut.setHours(23,59,59,999);
-    if(new Date() <= _cut) return true; // masih masa tayang → tetap di tabel aktif
+    // [v33] Aktual Opening terisi & <= hari ini → LANGSUNG masuk daftar Selesai (Arsip).
+    // Tetap terlihat di banner 'Opening Minggu Ini' selama minggu opening berlangsung.
 
     filArsip.push(d);
     var openingRaw = d.aktualOpening || d.targetOpening;
