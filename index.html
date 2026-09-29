@@ -1374,6 +1374,67 @@ function filterSMDrop(v){
   applyF();
 }
 
+/* [v32] parseTimestamp global — dipakai applyF() utk masa tayang project selesai */
+function parseTimestamp(ts){
+    if(!ts) return null;
+    // [FIX v29] GAS bisa mengirim timestamp "D/M/yyyy H:mm:ss" ATAU "M/D/yyyy H:mm:ss"
+    // tergantung locale Google Sheets — sebelumnya kode SELALU asumsi dd/MM/yyyy.
+    // Akibatnya: setiap tanggal dgn hari & bulan yg sama-sama <=12 (mis. hari ini
+    // tanggal 7 bulan 7 → 7/7, tidak masalah; tapi submission "kemarin" tanggal
+    // 7/6 bisa salah dibaca sbg 6 Juli, bukan 6 Juli/ atau malah bulan lain)
+    // ter-parse ke tanggal yg salah, sehingga jatuh di luar window "minggu ini"
+    // dan SM yg SUDAH submit kemarin tetap muncul sbg "belum submit".
+    // Fix: coba kedua interpretasi, pilih yang paling masuk akal (dekat hari ini).
+    var _now = new Date();
+    function _plausible(d){
+      if(!d || isNaN(d.getTime())) return false;
+      return d.getTime() <= _now.getTime() + 86400000 && d.getTime() >= _now.getTime() - 45*86400000;
+    }
+    // Format lengkap: "06/06/2026 10:23:45" atau "6/6/2026 10:23:45"
+    var m = ts.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if(m){
+      var a=+m[1], b=+m[2], y=+m[3], hh=+m[4], mi=+m[5], ss=m[6]?+m[6]:0;
+      var asDDMM = (b>=1 && b<=12) ? new Date(y, b-1, a, hh, mi, ss) : null; // a=hari, b=bulan
+      var asMMDD = (a>=1 && a<=12) ? new Date(y, a-1, b, hh, mi, ss) : null; // a=bulan, b=hari
+      if(a>12 && asDDMM) return asDDMM;   // a>12 -> a pasti hari -> format dd/MM
+      if(b>12 && asMMDD) return asMMDD;   // b>12 -> b pasti hari -> format MM/dd
+      // ambigu (keduanya <=12): pilih interpretasi yang paling masuk akal
+      var ddOk = _plausible(asDDMM), mmOk = _plausible(asMMDD);
+      if(ddOk && !mmOk) return asDDMM;
+      if(mmOk && !ddOk) return asMMDD;
+      if(ddOk && mmOk){
+        return Math.abs(_now-asDDMM) <= Math.abs(_now-asMMDD) ? asDDMM : asMMDD;
+      }
+      return asDDMM || asMMDD; // fallback
+    }
+    // Format "yyyy-MM-dd" atau "yyyy-dd-MM" (GAS kadang swap hari/bulan)
+    // Deteksi: jika bagian ke-2 > 12, berarti itu hari bukan bulan -> swap
+    // → anggap jam 00:00 hari itu (tidak bisa tahu jam aslinya)
+    var m2 = ts.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(m2){
+      var y=+m2[1], a=+m2[2], b=+m2[3];
+      var month, day;
+      if(a > 12){ day=a; month=b; } // yyyy-dd-MM -> swap
+      else { month=a; day=b; }      // yyyy-MM-dd -> normal
+      var parsed = new Date(y, month-1, day, 0, 0, 0);
+      // Guard: jika hasil parse > hari ini + 7 hari, coba swap hari/bulan
+      var _now = new Date(); _now.setHours(0,0,0,0);
+      if(parsed > new Date(_now.getTime() + 7*86400000)){
+        // Kemungkinan swap: coba tukar month<->day
+        var parsed2 = new Date(y, day-1, month, 0, 0, 0);
+        if(parsed2 <= new Date(_now.getTime() + 7*86400000)) return parsed2;
+        return null; // tidak bisa dipercaya, abaikan
+      }
+      return parsed;
+    }
+    var m3 = ts.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(m3) return new Date(+m3[3], +m3[2]-1, +m3[1], 0, 0, 0);
+    return new Date(ts);
+  }
+
+
+function isOnTrk(d){ return isOnTrk(d) || d.status==='Selesai'; }
+
 function applyF() {
   const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   
@@ -1466,6 +1527,23 @@ function applyF() {
   fil = fil.filter(function(d){
     var statusSelesai = (d.status||'').toLowerCase() === 'selesai';
     if(!statusSelesai) return true; // bukan project selesai -> tetap di tabel aktif
+
+    // [v32] 'Selesai' SAJA tidak cukup — wajib Aktual Opening terisi (<= hari ini).
+    // Kosong = belum selesai → tetap di tabel aktif (menunggu opening).
+    var _ao = d.aktualOpening ? new Date(d.aktualOpening) : null;
+    if(_ao) _ao.setHours(0,0,0,0);
+    if(!_ao || isNaN(_ao.getTime()) || _ao > hariIni) return true;
+
+    // [v32] Masa tayang: tetap tampil sampai Minggu (akhir pekan) dari tanggal
+    // yang lebih baru antara Aktual Opening dan submit terakhir, supaya tidak
+    // langsung hilang begitu SM submit laporan opening.
+    var _ref = _ao;
+    var _ts = parseTimestamp(d.timestamp);
+    if(_ts && !isNaN(_ts.getTime()) && _ts > _ref) _ref = new Date(_ts.getFullYear(), _ts.getMonth(), _ts.getDate());
+    var _cut = new Date(_ref);
+    _cut.setDate(_ref.getDate() + ((7 - _ref.getDay()) % 7)); // Minggu pekan itu
+    _cut.setHours(23,59,59,999);
+    if(new Date() <= _cut) return true; // masih masa tayang → tetap di tabel aktif
 
     filArsip.push(d);
     var openingRaw = d.aktualOpening || d.targetOpening;
@@ -1596,8 +1674,7 @@ function rWeeklyAlert(){
     // FIX: hanya exclude kalau project SUDAH benar-benar Grand Opening (aktualOpeningLewat)
     // atau statusnya "Selesai" dan opening-nya sudah lewat. Progress 100% saja TIDAK
     // cukup untuk berhenti menagih laporan mingguan.
-    var shouldExclude = (statusSelesai && openingLewat)
-                     || aktualOpeningLewat;         // sudah grand opening → exclude
+    var shouldExclude = aktualOpeningLewat; // [v32] Selesai tanpa Aktual Opening = belum selesai         // sudah grand opening → exclude
     if(shouldExclude) return;
 
     if(!d.sm || d.sm==='—'){
@@ -1789,7 +1866,7 @@ function rWeeklyAlert(){
 function rSL(){
   const cr=fil.filter(d=>d.status==='Critical Delay');
   const mn=fil.filter(d=>d.status==='Minor Delay');
-  const ok=fil.filter(d=>['On Track','Early Stage'].includes(d.status));
+  const ok=fil.filter(d=>['On Track','Early Stage','Selesai'].includes(d.status));
   const is=fil.reduce((s,d)=>s+(d.issues||[]).length,0);
   g('acCr').textContent=cr.length;
   
@@ -1850,7 +1927,7 @@ function rKPI(){
   // [FIX v29] Banner sekarang punya kartu terpisah utk "On Track" dan "Early Stage"
   // (sebelumnya digabung jadi satu angka "On Track" saja) supaya SELALU sinkron
   // dengan kategori di Health Status donut.
-  const t=fil.length, on=fil.filter(d=>d.status==='On Track').length;
+  const t=fil.length, on=fil.filter(d=>isOnTrk(d)).length;
   const ea=fil.filter(d=>d.status==='Early Stage').length;
   g('kt').textContent=t; g('kts').textContent=BRANDS.filter(b=>fil.find(d=>normBrand(d.brand)===normBrand(b))).length+' brand aktif'; g('ktt').textContent=t+' proj';
   g('ko').textContent=on; g('kos').textContent=t?Math.round(on/t*100)+'% dari total':'—'; g('kot').textContent=t?'+'+Math.round(on/t*100)+'%':'—';
@@ -2301,7 +2378,7 @@ function rIssues(){
 
 /* ─── DONUT ─── */
 function rDonut(){
-  const t=fil.length,on=fil.filter(d=>d.status==='On Track').length;
+  const t=fil.length,on=fil.filter(d=>isOnTrk(d)).length;
   const mn=fil.filter(d=>d.status==='Minor Delay').length,cr=fil.filter(d=>d.status==='Critical Delay').length;
   const ea=fil.filter(d=>d.status==='Early Stage').length;
   const circ=2*Math.PI*28;
@@ -2355,9 +2432,9 @@ function rHsMove(){
 
   // Urutan tingkat "keparahan" untuk styling & supaya Critical selalu muncul lebih dulu
   const ORDER=['Critical Delay','Minor Delay','On Track','Early Stage'];
-  const ICON={'Critical Delay':'🔴','Minor Delay':'⚠','On Track':'✅','Early Stage':'🔵'};
-  const COLOR={'Critical Delay':'var(--red)','Minor Delay':'var(--yellow)','On Track':'var(--green)','Early Stage':'var(--teal)'};
-  const SEVERITY={'Critical Delay':3,'Minor Delay':2,'On Track':0,'Early Stage':0};
+  const ICON={'Critical Delay':'🔴','Minor Delay':'⚠','On Track':'✅','Early Stage':'🔵','Selesai':'🏁'};
+  const COLOR={'Critical Delay':'var(--red)','Minor Delay':'var(--yellow)','On Track':'var(--green)','Early Stage':'var(--teal)','Selesai':'var(--green)'};
+  const SEVERITY={'Critical Delay':3,'Minor Delay':2,'On Track':0,'Early Stage':0,'Selesai':0};
 
   // Kelompokkan berdasarkan status TUJUAN (to), karena itu yang paling relevan ditindaklanjuti
   const groups={};
@@ -2740,7 +2817,7 @@ function exportPDF(){
 function rSummary(){
   const t=fil.length;
   if(!t){g('summaryBody').innerHTML='<div class="empty">Tidak ada data</div>';return;}
-  const on=fil.filter(d=>d.status==='On Track').length;
+  const on=fil.filter(d=>isOnTrk(d)).length;
   const mn=fil.filter(d=>d.status==='Minor Delay').length;
   const cr=fil.filter(d=>d.status==='Critical Delay').length;
   const ea=fil.filter(d=>d.status==='Early Stage').length;
@@ -2759,7 +2836,7 @@ function rSummary(){
     if(!total) return '';
     const pCr = pProjs.filter(d => d.status === 'Critical Delay').length;
     const pMn = pProjs.filter(d => d.status === 'Minor Delay').length;
-    const pOn = pProjs.filter(d => d.status === 'On Track').length;
+    const pOn = pProjs.filter(d => isOnTrk(d)).length;
     const pEa = pProjs.filter(d => d.status === 'Early Stage').length;
     
     // Hitung persentase bar untuk grafik batang bertumpuk
@@ -2840,7 +2917,7 @@ function rSummary(){
 function g(id){return document.getElementById(id);}
 function fmtT(d){return d.toLocaleString('id-ID',{dateStyle:'short',timeStyle:'short'});}
 function pclr(p,t){const d=p-t;return d>=-5?'var(--green)':d>=-10?'var(--yellow)':'var(--red)';}
-function sbg(s){const m={'On Track':['s-on','✅'],'Minor Delay':['s-mn','⚠'],'Critical Delay':['s-cr','🔴'],'Early Stage':['s-ea','🔵']};const[c,i]=m[s]||['s-ea','—'];return `<span class="sb ${c}">${i} ${s}</span>`;}
+function sbg(s){const m={'Selesai':['s-on','🏁'],'On Track':['s-on','✅'],'Minor Delay':['s-mn','⚠'],'Critical Delay':['s-cr','🔴'],'Early Stage':['s-ea','🔵']};const[c,i]=m[s]||['s-ea','—'];return `<span class="sb ${c}">${i} ${s}</span>`;}
 function hideLoad(){const l=g('loading');l.style.opacity='0';setTimeout(()=>l.style.display='none',400);}
 function showSettings(){g('gurl').value=GAS;g('modal').style.display='flex';}
 function closeM(){g('modal').style.display='none';}
