@@ -837,7 +837,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
     <!-- [v31] Banner Opening Minggu Ini -->
     <div class="card" id="openingMingguIniCard" style="display:none;margin-bottom:14px;border-color:rgba(34,197,94,.35)">
       <div class="chd">
-        <div class="cht">🎉 Project Opening Minggu Ini</div>
+        <div class="cht">🎉 Project Baru Opening — Minggu Ini &amp; Minggu Lalu</div>
         <div class="cbadge" id="openingMingguIniCount" style="background:rgba(34,197,94,.15);color:var(--green)">—</div>
       </div>
       <div id="openingMingguIniList" style="padding:10px 14px;display:flex;flex-direction:column;gap:0"></div>
@@ -1004,7 +1004,7 @@ tbody td{padding:7px 8px;font-size:10.5px;vertical-align:middle;overflow:hidden;
       <button class="btn btn-g" style="padding:5px 10px" onclick="closeArsip()">✕ Tutup</button>
     </div>
     <div class="mdesc">Semua project yang statusnya sudah Selesai — tetap bisa dicari & dilihat report opening-nya kapan saja, tidak terbatas waktu.</div>
-    <input type="text" class="minput" id="arsipSearchInput" placeholder="Cari nama project / PM / SM…" oninput="arsipSearch=this.value;rArsip()">
+    <input type="text" class="minput" id="arsipSearchInput" placeholder="Cari nama project / PM / SM / kontraktor…" oninput="arsipSearch=this.value;rArsip()">
     <div class="cbadge" id="arsipCount" style="margin-bottom:8px;display:inline-block">—</div>
     <div id="arsipList" style="max-height:60vh;overflow-y:auto"></div>
   </div>
@@ -1519,6 +1519,7 @@ function applyF() {
   var mondayThisWeek = new Date(hariIni);
   mondayThisWeek.setDate(hariIni.getDate() - ((hariIni.getDay()+6)%7)); // Senin minggu ini
   mondayThisWeek.setHours(0,0,0,0);
+  var mondayLastWeek = new Date(mondayThisWeek); mondayLastWeek.setDate(mondayThisWeek.getDate()-7); // [v34] Senin minggu lalu
   var sundayThisWeek = new Date(mondayThisWeek);
   sundayThisWeek.setDate(mondayThisWeek.getDate()+6);
   sundayThisWeek.setHours(23,59,59,999);
@@ -1542,12 +1543,34 @@ function applyF() {
     var openingRaw = d.aktualOpening || d.targetOpening;
     if(openingRaw){
       var dOp = new Date(openingRaw); dOp.setHours(0,0,0,0);
-      if(!isNaN(dOp.getTime()) && dOp>=mondayThisWeek && dOp<=sundayThisWeek){
+      // [v34] banner 'Baru Opening' = minggu lalu + minggu ini (sebelumnya hanya minggu ini → project
+      // yang opening minggu lalu langsung hilang dari halaman utama).
+      if(!isNaN(dOp.getTime()) && dOp>=mondayLastWeek && dOp<=sundayThisWeek){
+        d._openGroup = (dOp>=mondayThisWeek) ? 'Minggu ini' : 'Minggu lalu';
+        d._openTs = dOp.getTime();
         filOpeningMingguIni.push(d);
       }
     }
     return false; // keluar dari tabel aktif — sudah dipindah ke arsip
   });
+
+  // [v34] Link laporan TERAKHIR per project (laporan minggu terbaru yang punya File URL) — dipakai Arsip & banner
+  var lastFileMap = {};
+  raw.forEach(function(r){
+    if(!r.fileUrl || r.fileUrl.indexOf('http')!==0) return;
+    var k = (r.sm||'')+'|'+(r.namaProject||'');
+    var rt = (typeof parseTimestamp==='function' && parseTimestamp(r.timestamp)) ? parseTimestamp(r.timestamp).getTime() : 0;
+    var cur = lastFileMap[k];
+    if(!cur || r.week>cur.week || (r.week===cur.week && rt>cur.ts)) lastFileMap[k] = {url:r.fileUrl, week:r.week, ts:rt};
+  });
+  filArsip.forEach(function(d){
+    var own = (d.fileUrl && d.fileUrl.indexOf('http')===0) ? {url:d.fileUrl, week:d.week} : null;
+    var lf = lastFileMap[(d.sm||'')+'|'+(d.namaProject||'')];
+    var pick = (own && (!lf || d.week>=lf.week)) ? own : lf;
+    d._lastLink = pick ? pick.url : '';
+    d._lastLinkWeek = pick ? pick.week : 0;
+  });
+  filOpeningMingguIni.sort(function(a,b){ return (b._openTs||0)-(a._openTs||0); });
 
   // Arsip diurutkan dari opening TERBARU dulu
   filArsip.sort(function(a,b){
@@ -2136,6 +2159,19 @@ function disiplinRow(d, colspan){
   </tr>`;
 }
 
+
+/* [v34] Link laporan terakhir + kontraktor untuk daftar Selesai/Baru Opening */
+function laporanLinkHtml(d){
+  if(d._lastLink){
+    return '<a href="'+d._lastLink+'" target="_blank" onclick="event.stopPropagation()" style="font-size:9.5px;font-weight:700;color:var(--blue);text-decoration:none">📄 Laporan'+(d._lastLinkWeek?' W'+d._lastLinkWeek:'')+'</a>';
+  }
+  return '<span style="font-size:9px;color:var(--t3)">— link laporan belum ada</span>';
+}
+function kontraktorLineHtml(d){
+  var k=(d.kontraktor&&d.kontraktor!=='—')?d.kontraktor:'—';
+  return '<div class="prktr">🏗 '+k+'</div>';
+}
+
 /* ─── [v31] OPENING MINGGU INI ─── */
 function rOpeningMingguIni(){
   var card=g('openingMingguIniCard'), list=g('openingMingguIniList'), cnt=g('openingMingguIniCount');
@@ -2156,10 +2192,10 @@ function rOpeningMingguIni(){
           <td style="width:34%">
             <span class="pn">${d.namaProject}${fileIcon}<span class="btag ${BCLS[d.brand]||'bt-c'}">${d.brand}</span></span>
           </td>
-          <td style="width:22%"><span class="prsm">${d.namaPM}</span><div class="prktr">SM: ${d.sm}</div></td>
+          <td style="width:22%"><span class="prsm">${d.namaPM}</span><div class="prktr">SM: ${d.sm}</div>${kontraktorLineHtml(d)}</td>
           <td style="width:20%">
             <span style="font-size:8.5px;color:var(--t3)">Opening</span><br>
-            <span style="font-size:10px;font-weight:700;color:var(--green)">${openDate}</span>
+            <span style="font-size:10px;font-weight:700;color:var(--green)">${openDate}</span>${d._openGroup?`<span style="font-size:8px;padding:1px 5px;border-radius:8px;background:rgba(34,197,94,.15);color:var(--green);margin-left:4px">${d._openGroup}</span>`:''}<br>${laporanLinkHtml(d)}
           </td>
           <td style="width:14%">${sbg(d.status)}</td>
           <td style="width:10%;text-align:right;color:var(--t3);font-size:11px">${isExp?'▲':'▼'}</td>
@@ -2931,7 +2967,8 @@ function rArsip(){
     return (d.namaProject||'').toLowerCase().includes(q)
         || (d.namaPM||'').toLowerCase().includes(q)
         || (d.sm||'').toLowerCase().includes(q)
-        || (d.brand||'').toLowerCase().includes(q);
+        || (d.brand||'').toLowerCase().includes(q)
+        || (d.kontraktor||'').toLowerCase().includes(q);
   });
   cntEl.textContent=data.length+' project selesai';
   if(!data.length){
@@ -2951,10 +2988,10 @@ function rArsip(){
           <td style="width:34%">
             <span class="pn">${d.namaProject}${fileIcon}<span class="btag ${BCLS[d.brand]||'bt-c'}">${d.brand}</span></span>
           </td>
-          <td style="width:22%"><span class="prsm">${d.namaPM}</span><div class="prktr">SM: ${d.sm}</div></td>
+          <td style="width:22%"><span class="prsm">${d.namaPM}</span><div class="prktr">SM: ${d.sm}</div>${kontraktorLineHtml(d)}</td>
           <td style="width:20%">
             <span style="font-size:8.5px;color:var(--t3)">Opening</span><br>
-            <span style="font-size:10px;font-weight:700">${openDate}</span>
+            <span style="font-size:10px;font-weight:700">${openDate}</span><br>${laporanLinkHtml(d)}
           </td>
           <td style="width:14%">${sbg(d.status)}</td>
           <td style="width:10%;text-align:right;color:var(--t3);font-size:11px">${isExp?'▲':'▼'}</td>
